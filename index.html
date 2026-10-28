@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Run Dine</title>
+<meta name="description" content="Calculateur de séances de fractionné à partir de la VMA, avec conseils par niveau — par Kevin Aldon, entraîneur.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1115;--bg2:#171a21;--card:#1d212a;--line:#2b303b;--txt:#eef1f5;--muted:#9aa3b2;
+  --acc:#ff6b2c;--acc2:#ffb347;--ok:#2ecc71;--warn:#f5b041;--bad:#ff5a5f;--blue:#4aa3ff;
+  --r:16px;
+}
+@media (prefers-color-scheme: light){
+  :root{--bg:#f4f5f8;--bg2:#ffffff;--card:#ffffff;--line:#e2e5ec;--txt:#161a22;--muted:#5d6676;}
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:1.45}
+h1,h2,h3,.big{font-family:"Barlow Condensed",Inter,sans-serif;letter-spacing:.3px}
+a{color:var(--acc)}
+header{padding:18px 16px 8px;max-width:980px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;font-weight:800;color:#fff;font-family:"Barlow Condensed";font-size:22px}
+header h1{margin:0;font-size:28px;line-height:1}
+header small{color:var(--muted);display:block;font-size:13px}
+nav{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav .in{max-width:980px;margin:0 auto;display:flex;gap:6px;overflow-x:auto;padding:8px 16px}
+nav button{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--muted);padding:8px 14px;border-radius:999px;font:600 14px Inter;cursor:pointer}
+nav button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+main{max-width:980px;margin:0 auto;padding:16px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 10px;font-size:24px}
+.card h3{margin:14px 0 6px;font-size:19px}
+.grid2{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:760px){.grid2{grid-template-columns:1fr 1fr}}
+.hero{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:760px){.hero{grid-template-columns:1fr 1fr}}
+.entry{cursor:pointer;transition:transform .15s;border:2px solid var(--line)}
+.entry:hover{transform:translateY(-2px);border-color:var(--acc)}
+.entry .ico{font-size:34px}
+.entry h2{font-size:30px}
+.muted{color:var(--muted)}
+.quote{border-left:4px solid var(--acc);padding:6px 12px;margin:10px 0;color:var(--muted);font-style:italic}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px;font-weight:600}
+input[type=number],input[type=text],select{width:100%;background:var(--bg2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:500 16px Inter}
+.row{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.row3{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
+.seg{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.seg button{flex:1;border:0;background:transparent;color:var(--muted);padding:10px;border-radius:9px;font:600 14px Inter;cursor:pointer}
+.seg button.on{background:var(--acc);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--bg2);color:var(--txt);padding:8px 12px;border-radius:999px;font:600 14px Inter;cursor:pointer}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.slider{display:flex;align-items:center;gap:10px}
+.slider input[type=range]{flex:1;accent-color:var(--acc);height:30px}
+.pbtn{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--txt);font:700 20px Inter;cursor:pointer}
+.pval{font:800 34px "Barlow Condensed";min-width:86px;text-align:center}
+.result{text-align:center;padding:20px 12px;border-radius:var(--r);background:linear-gradient(135deg,rgba(255,107,44,.16),rgba(255,179,71,.08));border:1px solid rgba(255,107,44,.4)}
+.result .big{font-size:64px;font-weight:800;line-height:1;color:var(--acc)}
+.result .lab{color:var(--muted);font-size:14px}
+.result .sub{margin-top:8px;font-weight:600}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:700}
+.p-ok{background:rgba(46,204,113,.15);color:var(--ok)}
+.p-warn{background:rgba(245,176,65,.15);color:var(--warn)}
+.p-bad{background:rgba(255,90,95,.15);color:var(--bad)}
+.p-info{background:rgba(74,163,255,.15);color:var(--blue)}
+.p-fire{background:rgba(255,107,44,.18);color:var(--acc)}
+.zonebar{position:relative;height:10px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);margin:10px 0 4px}
+.zonebar .z{position:absolute;top:0;bottom:0;background:rgba(46,204,113,.45);border-radius:6px}
+.zonebar .k{position:absolute;top:-5px;width:4px;height:18px;background:var(--acc);border-radius:2px}
+.adv{display:grid;gap:8px}
+.adv div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.adv .h{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.btn{display:inline-block;border:0;background:var(--acc);color:#fff;padding:12px 18px;border-radius:12px;font:700 15px Inter;cursor:pointer;margin-top:12px}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase}
+.check{display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:14px}
+.check input{width:20px;height:20px;accent-color:var(--acc);margin-top:1px}
+.radio{display:grid;gap:8px}
+.radio label{display:flex;gap:10px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px;margin:0;color:var(--txt);font-size:15px;cursor:pointer}
+.radio input{accent-color:var(--acc);width:18px;height:18px}
+.hide{display:none!important}
+.week li{margin-bottom:10px}
+.week{padding-left:20px}
+.tag{font-size:12px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.5px}
+.fil{border-left:5px solid var(--acc)}
+footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);font-size:13px}
+.note{font-size:13px;color:var(--muted);margin-top:8px}
+@media print{nav,header,footer,.noprint{display:none!important}section{display:none!important}section.on{display:block!important}body{background:#fff;color:#000}.card{border:1px solid #ccc}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">RD</div>
+  <div><h1>RUN DINE</h1><small>Le calculateur de séances de Kevin Aldon, entraîneur</small></div>
+</header>
+<nav><div class="in">
+  <button data-s="home" class="on">Accueil</button>
+  <button data-s="calc">⚡ Calcul direct</button>
+  <button data-s="prof">🧭 Mieux vous connaître</button>
+  <button data-s="fil">Filières</button>
+  <button data-s="test">Côtes & tests</button>
+</div></nav>
+
+<main>
+<!-- ACCUEIL -->
+<section id="home" class="on">
+  <div class="card">
+    <h2>Courir, c'est aussi aller chercher ses limites.</h2>
+    <p>Ici, même le débutant fait du fractionné et des côtes. Pas pour se faire mal : pour <b>ressentir l'effort, se dépasser et réussir</b>. Tout est dosé selon ton niveau, à partir de ta VMA et des connaissances scientifiques sur l'entraînement.</p>
+    <div class="quote">« La qualité du travail dépend de la connaissance de tes limites. Je t'oriente, à toi d'écouter tes sensations. »</div>
+  </div>
+  <div class="hero">
+    <div class="card entry" data-go="calc">
+      <div class="ico">⚡</div>
+      <h2>Calcul direct</h2>
+      <p class="muted">Tu connais ta VMA et tu sais ce que tu veux travailler. Saisis ton format (10/10, 30/30…) ou ta distance (400 m, 1 km…) et obtiens ta distance ou ton temps à réaliser.</p>
+    </div>
+    <div class="card entry" data-go="prof">
+      <div class="ico">🧭</div>
+      <h2>Mieux vous connaître</h2>
+      <p class="muted">Âge, pratique, séances, VMA, fréquence cardiaque, chronos, objectif… Le site te situe parmi 4 niveaux et te propose tes allures et ta semaine type.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CALCUL DIRECT -->
+<section id="calc">
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <h2>Ton profil express</h2>
+        <div class="row">
+          <div><label>VMA (km/h)</label><input id="cVma" type="number" step="0.1" min="6" max="26" value="15"></div>
+          <div><label>Niveau</label><select id="cLv">
+            <option value="1">N1 · Débutant / reprise</option>
+            <option value="2" selected>N2 · Loisir</option>
+            <option value="3">N3 · Confirmé</option>
+            <option value="4">N4 · Élite</option></select></div>
+        </div>
+        <label>Fréquence cardiaque (facultatif) — pour connaître ta FC visée</label>
+        <div class="row3">
+          <div><input id="cAge" type="number" min="8" max="95" placeholder="Âge"></div>
+          <div><input id="cFcm" type="number" min="120" max="230" placeholder="FC max"></div>
+          <div><input id="cFcr" type="number" min="30" max="110" placeholder="FC repos"></div>
+        </div>
+        <div class="check"><input type="checkbox" id="cDefi"><span><b>🔥 Mode Défi</b> — zone conseillée du niveau au-dessus, pour aller chercher le dépassement.</span></div>
+      </div>
+      <div class="card">
+        <h2>Ce que tu veux travailler</h2>
+        <div class="seg" id="modeSeg"><button data-m="t" class="on">Par le temps</button><button data-m="d">Par la distance</button></div>
+        <div id="panT">
+          <label>Format (effort / récupération, en secondes)</label>
+          <div class="chips" id="fmtChips">
+            <span class="chip" data-w="10" data-r="10">10/10</span>
+            <span class="chip" data-w="10" data-r="20">10/20</span>
+            <span class="chip on" data-w="15" data-r="15">15/15</span>
+            <span class="chip" data-w="15" data-r="30">15/30</span>
+            <span class="chip" data-w="30" data-r="30">30/30</span>
+            <span class="chip" data-w="45" data-r="15">45/15</span>
+            <span class="chip" data-w="60" data-r="60">1'/1'</span>
+          </div>
+          <div class="row">
+            <div><label>Ou ton effort perso (s)</label><input id="cW" type="number" min="3" max="1200" placeholder="ex. 20"></div>
+            <div><label>Ta récup perso (s)</label><input id="cR" type="number" min="0" max="1200" placeholder="ex. 20"></div>
+          </div>
+        </div>
+        <div id="panD" class="hide">
+          <label>Distance (m)</label>
+          <div class="chips" id="distChips">
+            <span class="chip" data-d="60">60</span><span class="chip" data-d="100">100</span><span class="chip" data-d="200">200</span>
+            <span class="chip" data-d="300">300</span><span class="chip on" data-d="400">400</span><span class="chip" data-d="600">600</span>
+            <span class="chip" data-d="800">800</span><span class="chip" data-d="1000">1000</span><span class="chip" data-d="1500">1500</span>
+            <span class="chip" data-d="2000">2000</span><span class="chip" data-d="3000">3000</span>
+          </div>
+          <label>Ou ta distance perso (m)</label><input id="cD" type="number" min="10" max="50000" placeholder="ex. 250, 1200, 5000…">
+        </div>
+        <label>Intensité (% de VMA)</label>
+        <div class="slider">
+          <button class="pbtn" id="pMinus">−</button>
+          <input type="range" id="cPct" min="60" max="140" step="1" value="105">
+          <button class="pbtn" id="pPlus">+</button>
+          <div class="pval" id="pVal">105 %</div>
+        </div>
+        <div class="zonebar"><div class="z" id="zBar"></div><div class="k" id="zKnob"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <span id="zTxt" class="muted" style="font-size:14px"></span><span id="zPill" class="pill"></span>
+        </div>
+        <button class="btn ghost" id="applyZone">Appliquer la zone conseillée</button>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="result">
+          <div class="lab" id="rLab">Distance à parcourir</div>
+          <div class="big" id="rBig">—</div>
+          <div class="sub" id="rSub"></div>
+          <div class="sub" id="rFc" style="color:var(--bad)"></div>
+        </div>
+        <div class="row3" style="margin-top:12px">
+          <div><label>Répétitions (efforts par série)</label><input id="cRep" type="number" min="1" max="60" value="10"></div>
+          <div><label>Séries (nombre de blocs)</label><input id="cSer" type="number" min="1" max="10" value="2"></div>
+          <div><label>Pause entre séries (min)</label><input id="cRs" type="number" min="0" max="15" value="3"></div>
+        </div>
+        <p id="rTot" class="note"></p>
+      </div>
+      <div class="card">
+        <h2>Les conseils du coach</h2>
+        <div class="adv" id="adv"></div>
+        <button class="btn ghost noprint" onclick="window.print()">🖨️ Imprimer ma séance</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROFIL -->
+<section id="prof">
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <h2>Qui es-tu ?</h2>
+        <div class="row">
+          <div><label>Âge</label><input id="pAge" type="number" min="8" max="95" placeholder="ex. 42"></div>
+          <div><label>Sexe (pour situer le niveau)</label><select id="pSex"><option value="">—</option><option value="H">Homme</option><option value="F">Femme</option></select></div>
+        </div>
+        <label>Ta pratique de la course</label>
+        <select id="pPrac">
+          <option value="jamais">Je n'ai jamais couru régulièrement</option>
+          <option value="reprise">Je reprends après un long arrêt</option>
+          <option value="loisir" selected>Je cours régulièrement, en loisir</option>
+          <option value="reg2">Je cours régulièrement depuis plus de 2 ans</option>
+          <option value="compreg">Je fais de la compétition (régional)</option>
+          <option value="compnat">Je fais de la compétition (national)</option>
+          <option value="inter">Athlète de niveau international</option>
+        </select>
+        <div class="check"><input type="checkbox" id="pSoft"><span>Je démarre avec du surpoids ou après un très long arrêt : je veux commencer en douceur.</span></div>
+        <label>Séances de course par semaine</label>
+        <input id="pSes" type="number" min="1" max="14" value="3">
+      </div>
+      <div class="card">
+        <h2>Tes repères</h2>
+        <div class="row">
+          <div><label>VMA (km/h) — si connue</label><input id="pVma" type="number" step="0.1" min="6" max="26" placeholder="ex. 15"></div>
+          <div><label>&nbsp;</label><button class="btn ghost" style="margin:0;width:100%" id="goTests">Pas de VMA ? Fais un test</button></div>
+        </div>
+        <div class="row">
+          <div><label>FC max (bpm)</label><input id="pFcm" type="number" min="120" max="230" placeholder="estimée si vide"></div>
+          <div><label>FC de repos (bpm)</label><input id="pFcr" type="number" min="30" max="110" placeholder="au réveil, allongé"></div>
+        </div>
+        <label>Chronos récents (facultatif) — ex. 45:30 ou 1:52:00</label>
+        <div class="row3">
+          <div><input id="p10" type="text" placeholder="10 km"></div>
+          <div><input id="pSemi" type="text" placeholder="Semi"></div>
+          <div><input id="pMara" type="text" placeholder="Marathon"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Que prépares-tu ?</h2>
+        <div class="radio">
+          <label><input type="radio" name="obj" value="forme" checked> Juste me remettre en forme</label>
+          <label><input type="radio" name="obj" value="tenir"> Tenir une distance</label>
+          <label><input type="radio" name="obj" value="temps"> Faire un temps</label>
+        </div>
+        <div id="objDist" class="hide">
+          <label>Sur quelle distance ?</label>
+          <select id="pObjD">
+            <option value="5">5 km</option><option value="10" selected>10 km</option>
+            <option value="21.0975">Semi-marathon</option><option value="42.195">Marathon</option><option value="autre">Autre…</option>
+          </select>
+          <div id="objOther" class="hide"><label>Distance (km)</label><input id="pObjDo" type="number" step="0.1" min="1" max="200" value="15"></div>
+        </div>
+        <div id="objTime" class="hide"><label>Quel temps vises-tu ? (ex. 50:00 ou 1:45:00)</label><input id="pObjT" type="text" placeholder="ex. 50:00"></div>
+        <button class="btn" id="analyse">Analyser mon profil</button>
+      </div>
+    </div>
+    <div id="profOut">
+      <div class="card"><h2>Ton profil</h2><p class="muted">Remplis le questionnaire puis clique sur « Analyser mon profil ». Tout se calcule sur ton téléphone : rien n'est enregistré.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FILIÈRES -->
+<section id="fil">
+  <div class="card"><h2>Les filières énergétiques</h2>
+    <p class="muted">Chaque filière correspond à une intensité et à des formes d'exercices. <span id="filVmaTxt">Saisis ta VMA dans le calcul direct ou le profil pour voir tes allures.</span></p>
+  </div>
+  <div id="filList"></div>
+</section>
+
+<!-- CÔTES & TESTS -->
+<section id="test">
+  <div class="grid2">
+    <div>
+      <div class="card fil">
+        <h2>Les côtes</h2>
+        <p>En montée, le % de VMA ne veut plus rien dire : on se règle à la <b>durée</b> et au <b>ressenti</b>. La côte renforce, développe la puissance et limite les impacts : idéale pour tous, y compris le débutant.</p>
+        <table><thead><tr><th>Niveau</th><th>Séance</th><th>Récup</th><th>Ressenti</th></tr></thead>
+        <tbody>
+          <tr><td>N1</td><td>6 × 20'' marche rapide ou course très souple</td><td>descente en marchant</td><td>6–7/10</td></tr>
+          <tr><td>N2</td><td>8 × 30''</td><td>descente en trottinant</td><td>7–8/10</td></tr>
+          <tr><td>N3</td><td>10 × 45''</td><td>descente trot</td><td>8–9/10</td></tr>
+          <tr><td>N4</td><td>10 × 1' ou côtes longues 3'</td><td>descente trot</td><td>9/10</td></tr>
+        </tbody></table>
+        <p class="note">Pente idéale : 5 à 8 %. Buste droit, regard loin devant, bras actifs, petites foulées dynamiques.</p>
+      </div>
+      <div class="card">
+        <h2>Fréquence cardiaque</h2>
+        <p><b>FC max</b> : si tu ne la connais pas, le site l'estime avec la formule de Tanaka (208 − 0,7 × âge), à ± 10 bpm près. Test terrain : après un bon échauffement, 3 min en accélérant progressivement, finir par une côte à fond ; relève le pic.</p>
+        <p><b>FC de repos</b> : le matin au réveil, allongé, sur 1 minute. Si elle est 5 à 7 bpm au-dessus de ton habitude, remplace ta séance intense par un footing léger.</p>
+        <p class="note">Sur l'intermittent court (10/10, 30/30), le cœur n'a pas le temps de monter : règle-toi à l'allure et au ressenti, pas au cardio.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h2>Estimer ta VMA</h2>
+        <h3>Test de 6 minutes (demi-Cooper)</h3>
+        <p class="muted">Après 15 min d'échauffement, cours le plus loin possible en 6 minutes, à allure régulière. VMA = distance (m) ÷ 100.</p>
+        <div class="row"><input id="t6" type="number" placeholder="Distance en 6 min (m)"><button class="btn" style="margin:0" data-test="6">Calculer</button></div>
+        <h3>Test de Cooper (12 minutes)</h3>
+        <p class="muted">Le plus loin possible en 12 minutes. Estimation : VMA ≈ distance (m) ÷ 200 (légère sous-estimation).</p>
+        <div class="row"><input id="t12" type="number" placeholder="Distance en 12 min (m)"><button class="btn" style="margin:0" data-test="12">Calculer</button></div>
+        <h3>À partir d'un 10 km</h3>
+        <p class="muted">Un 10 km se court entre 85 et 92 % de la VMA selon le niveau ; on prend 88 %.</p>
+        <div class="row"><input id="t10" type="text" placeholder="Chrono 10 km (ex. 48:30)"><button class="btn" style="margin:0" data-test="10">Calculer</button></div>
+        <p id="testOut" style="font-weight:700;margin-top:12px"></p>
+        <button class="btn ghost hide" id="testUse">Utiliser cette VMA</button>
+      </div>
+      <div class="card">
+        <h2>Avant de commencer</h2>
+        <p class="muted">Si tu reprends après un long arrêt, si tu as plus de 40 ans ou des facteurs de risque (surpoids, tabac, antécédents cardiaques), demande un avis médical avant le travail intense. Les conseils de ce site ne remplacent pas un professionnel de santé.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  Conçu par Kevin Aldon — éducateur sportif et entraîneur. Repères scientifiques : V. Billat (temps limite à VMA), G. Gacon (intermittent 30/30, 45/15), Dupont et al. 2004 (récupération passive en intermittent court), Karvonen (FC de réserve), Tanaka 2001 (FC max), échelle de Borg (ressenti).
+</footer>
+
+<script>
+/* ---------- Données scientifiques ---------- */
+const LVN=['N1 · Débutant / reprise','N2 · Loisir','N3 · Confirmé','N4 · Élite'];
+const RPE=['6–7/10','7–8/10','8–9/10','9/10'];
+// Intermittent (mode temps) : zone % VMA selon durée d'effort (s) et niveau
+const INT={10:[[95,105],[105,115],[110,120],[120,130]],15:[[95,100],[100,110],[105,115],[115,120]],20:[[92,100],[100,108],[105,112],[112,118]],30:[[90,95],[95,105],[100,110],[110,115]],45:[[85,92],[92,100],[95,105],[100,108]],60:[[85,90],[90,98],[95,102],[100,105]],90:[[82,88],[90,96],[93,100],[98,103]],120:[[80,88],[88,95],[92,98],[96,101]],180:[[78,85],[85,92],[90,96],[94,99]],300:[[75,82],[82,88],[87,92],[90,95]],600:[[70,78],[78,85],[84,89],[87,92]]};
+// Répétitions (mode distance) : zone % VMA selon distance (m) et niveau
+const DIST={60:[[95,105],[105,115],[115,130],[125,145]],100:[[95,105],[105,115],[115,125],[120,135]],200:[[95,100],[100,110],[110,120],[115,125]],300:[[90,100],[100,108],[106,112],[110,118]],400:[[90,95],[98,105],[103,110],[106,113]],600:[[85,95],[95,102],[100,105],[102,108]],800:[[85,90],[93,100],[98,104],[100,105]],1000:[[80,90],[90,98],[95,100],[97,102]],1500:[[75,85],[88,95],[92,97],[94,99]],2000:[[75,85],[85,92],[90,95],[92,97]],3000:[[70,80],[82,90],[87,92],[89,94]],5000:[[65,75],[78,85],[83,88],[86,91]],10000:[[60,70],[72,80],[78,84],[82,87]]};
+// Fraction de VMA tenue en course selon distance et niveau
+const FRAC={5:[.88,.90,.93,.95],10:[.84,.87,.90,.92],21.0975:[.77,.81,.85,.88],42.195:[.70,.75,.80,.83]};
+const REST=[
+ {r:[2,3],nat:'passive : marche',why:'Débutant : récupère plus longtemps que tu ne cours. L\'objectif est de réussir chaque répétition à la bonne allure.'},
+ {r:[1,1],nat:'passive, puis trottinée quand tu progresses',why:'Récupération égale à l\'effort : bon compromis entre qualité et volume.'},
+ {r:[.5,1],nat:'active : trot léger',why:'Récupération plus courte que l\'effort : on garde le cœur haut, on augmente le temps passé près de la VMA.'},
+ {r:[.3,.5],nat:'active : footing ~50 % VMA, contrôlé',why:'Récupération très courte et active, comme en compétition : proche du 10/5 ou du 45/15.'}];
+
+/* ---------- Utilitaires ---------- */
+const $=id=>document.getElementById(id);
+const ms=(vma,pct)=>vma/3.6*pct/100;
+function interp(tab,x,lv){const k=Object.keys(tab).map(Number).sort((a,b)=>a-b);
+  if(x<=k[0])return tab[k[0]][lv];if(x>=k[k.length-1])return tab[k[k.length-1]][lv];
+  for(let i=0;i<k.length-1;i++){if(x>=k[i]&&x<=k[i+1]){const t=(x-k[i])/(k[i+1]-k[i]),a=tab[k[i]][lv],b=tab[k[i+1]][lv];return[Math.round(a[0]+t*(b[0]-a[0])),Math.round(a[1]+t*(b[1]-a[1]))];}}}
+function fmt(s){if(!isFinite(s))return'—';if(s<60)return(Math.round(s*10)/10).toString().replace('.',',')+'"';
+  s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return h?`${h}h${String(m).padStart(2,'0')}'${String(x).padStart(2,'0')}"`:`${m}'${String(x).padStart(2,'0')}"`;}
+const pace=kmh=>fmt(3600/kmh)+'/km';
+const kmh=v=>(Math.round(v*10)/10).toString().replace('.',',')+' km/h';
+function parseT(str,long){if(!str)return null;str=str.trim().replace(/h/gi,':').replace(/[’'′]/g,':').replace(/["″]/g,'').replace(/:$/,'');
+  const p=str.split(':').map(Number);if(p.some(isNaN))return null;
+  if(p.length===1)return p[0]*60; if(p.length===2)return long?p[0]*3600+p[1]*60:p[0]*60+p[1]; return p[0]*3600+p[1]*60+p[2];}
+function fracFor(d,lv){if(FRAC[d])return FRAC[d][lv];const k=[5,10,21.0975,42.195];
+  if(d<=5)return Math.min(.97,FRAC[5][lv]+.01*(5-d)/2);if(d>=42.195)return FRAC[42.195][lv]-.01*(d-42.195)/10;
+  for(let i=0;i<3;i++)if(d>=k[i]&&d<=k[i+1]){const t=(d-k[i])/(k[i+1]-k[i]);return FRAC[k[i]][lv]+t*(FRAC[k[i+1]][lv]-FRAC[k[i]][lv]);}}
+
+/* ---------- Navigation ---------- */
+function show(s){document.querySelectorAll('section').forEach(e=>e.classList.toggle('on',e.id===s));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));
+  if(s==='fil')renderFil();window.scrollTo({top:0,behavior:'smooth'});}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.s));
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
+
+/* ---------- Calcul direct ---------- */
+let mode='t',W=15,R=15,D=400;
+function chipGroup(id,cb){const g=$(id);g.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{g.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');cb(c);calc();});}
+chipGroup('fmtChips',c=>{W=+c.dataset.w;R=+c.dataset.r;$('cW').value='';$('cR').value='';});
+chipGroup('distChips',c=>{D=+c.dataset.d;$('cD').value='';});
+['cW','cR'].forEach(i=>$(i).oninput=()=>{const w=+$('cW').value;if(w>0){W=w;R=$('cR').value===''?w:+$('cR').value;$('fmtChips').querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));}calc();});
+$('cD').oninput=()=>{const d=+$('cD').value;if(d>0){D=d;$('distChips').querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));}calc();};
+['cAge','cFcm','cFcr'].forEach(i=>$(i).oninput=calc);
+
+/* FC visée selon % VMA : %FC de réserve ≈ %VO2max ≈ %VMA (Swain) ; sinon %FCmax ≈ 0,64 × %VMA + 37 */
+function fcTarget(pct,work){
+  const age=+$('cAge').value||null,fcr=+$('cFcr').value||null;let fcm=+$('cFcm').value||null,est=false;
+  if(!fcm&&age){fcm=Math.round(208-.7*age);est=true;}
+  const p=Math.min(pct,100);let main,line;
+  if(fcm&&fcr){const lo=Math.round(fcr+(p-3)/100*(fcm-fcr)),hi=Math.min(fcm,Math.round(fcr+(p+3)/100*(fcm-fcr)));
+    main=`${Math.round(p)} % de ta FC de réserve → <b>${lo}–${hi} bpm</b>`;line=`❤️ FC visée : ${lo}–${hi} bpm`;}
+  else if(fcm){const pm=Math.min(100,Math.round(.64*p+37)),lo=Math.round(fcm*(pm-3)/100),hi=Math.min(fcm,Math.round(fcm*(pm+3)/100));
+    main=`≈ ${pm} % de ta FC max → <b>${lo}–${hi} bpm</b>. Ajoute ta FC de repos pour plus de précision (Karvonen).`;line=`❤️ FC visée : ${lo}–${hi} bpm`;}
+  else{const pm=Math.min(100,Math.round(.64*p+37));main=`≈ <b>${pm} % de ta FC max</b>. Renseigne ton âge ou ta FC max (et ta FC de repos) pour obtenir tes battements.`;line=`❤️ ≈ ${pm} % de ta FC max`;}
+  if(est)main+=` <span class="muted">(FC max estimée à ${fcm} bpm, ± 10)</span>`;
+  if(pct>100)main+=' Au-delà de 100 % de VMA, tu cours plus vite que la vitesse qui amène à la FC max : le cœur ira à son maximum si l\'effort dure plus de 2 à 3 min.';
+  if(work<=90)main+=` Sur un effort de ${fmt(work)}, le cœur n'a pas le temps d'atteindre cette valeur pendant la répétition : elle s'observe en fin de série. Règle-toi d'abord à l'allure et au ressenti.`;
+  return[main,line];}
+$('modeSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;$('modeSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  $('panT').classList.toggle('hide',mode!=='t');$('panD').classList.toggle('hide',mode!=='d');calc();});
+['cVma','cLv','cDefi','cRep','cSer','cRs'].forEach(i=>{$(i).oninput=calc;$(i).onchange=calc;});
+$('cPct').oninput=calc;
+$('pMinus').onclick=()=>{$('cPct').value=+$('cPct').value-1;calc();};
+$('pPlus').onclick=()=>{$('cPct').value=+$('cPct').value+1;calc();};
+$('applyZone').onclick=()=>{const z=curZone();$('cPct').value=Math.round((z[0]+z[1])/2);calc();};
+
+function curLv(){let lv=+$('cLv').value-1;if($('cDefi').checked)lv=Math.min(3,lv+1);return lv;}
+function curZone(){const vma=+$('cVma').value||15,lv=curLv();
+  if(mode==='t')return interp(INT,W,lv);return interp(DIST,D,lv);}
+function filiere(pct,sec,intermittent){
+  if(pct<76)return['Capacité aérobie','Endurance fondamentale : construire le moteur, brûler les graisses, récupérer.'];
+  if(pct<91)return['Seuil / endurance active','Repousser le moment où l\'acide lactique s\'accumule : tenir vite plus longtemps.'];
+  if(intermittent&&pct<=130&&sec<=60)return['Puissance aérobie (VMA)','Intermittent court : faire travailler le cœur et les poumons au maximum (VO₂max).'];
+  if(pct<=110)return['Puissance aérobie (VMA)','Développer la VMA : le plafond de ton moteur aérobie.'];
+  if(sec<=10||(pct>=125&&sec<=15))return['Vitesse / anaérobie alactique','Explosivité et vitesse pure : efforts très courts, récupération complète.'];
+  return['Anaérobie lactique','Résister à l\'acidité musculaire : effort dur, récupération longue.'];}
+
+function calc(){
+  const vma=+$('cVma').value,lv=curLv(),baseLv=+$('cLv').value-1,pct=+$('cPct').value;
+  $('pVal').textContent=pct+' %';
+  if(!vma||vma<5){$('rBig').textContent='—';return;}
+  const v=ms(vma,pct);let work,distM;
+  if(mode==='t'){work=W;distM=v*W;$('rLab').textContent=`Distance à parcourir en ${W}''`;$('rBig').textContent=Math.round(distM)+' m';
+    $('rSub').textContent=`${kmh(vma*pct/100)} · ${pace(vma*pct/100)}`;}
+  else{work=D/v;distM=D;$('rLab').textContent=`Temps à réaliser sur ${D} m`;$('rBig').textContent=fmt(work);
+    $('rSub').textContent=`${kmh(vma*pct/100)} · ${pace(vma*pct/100)}`+(D>=200?` · passage aux 100 m : ${fmt(100/v)}`:'');}
+  // zone
+  const z=curZone(),pos=x=>Math.max(0,Math.min(100,(x-60)/80*100));
+  $('zBar').style.left=pos(z[0])+'%';$('zBar').style.width=(pos(z[1])-pos(z[0]))+'%';$('zKnob').style.left='calc('+pos(pct)+'% - 2px)';
+  $('zTxt').textContent=`Zone conseillée ${$('cDefi').checked?'(🔥 défi, '+LVN[lv].split(' ·')[0]+')':'('+LVN[baseLv].split(' ·')[0]+')'} : ${z[0]}–${z[1]} %`;
+  const zp=$('zPill');if(pct<z[0]-2){zp.className='pill p-info';zp.textContent='En dessous : plus facile';}
+  else if(pct>z[1]+2){zp.className='pill p-bad';zp.textContent='Au-dessus : très dur pour ce niveau';}
+  else{zp.className='pill p-ok';zp.textContent='Dans la zone ✓';}
+  // totaux
+  const rep=+$('cRep').value||1,ser=+$('cSer').value||1,rs=+$('cRs').value||0;
+  let restS;if(mode==='t')restS=R;else{const ra=REST[lv].r;restS=work*(ra[0]+ra[1])/2;}
+  const totD=distM*rep*ser,totT=(work*rep+restS*(rep-1))*ser+rs*60*(ser-1);
+  const unit=mode==='t'?`${W}''/${R}''`:`${D} m`;
+  $('rTot').innerHTML=`<b>${ser} série${ser>1?'s':''} de ${rep} × ${unit}</b> = <b>${rep*ser} efforts</b> au total${ser>1?`, avec ${rs}' de pause entre chaque série`:''}.<br>Volume intense <b>${totD>=1000?(Math.round(totD/100)/10).toString().replace('.',',')+' km':Math.round(totD)+' m'}</b> (${fmt(work*rep*ser)} d'effort) · durée du bloc ≈ <b>${fmt(totT)}</b>`;
+  // conseils
+  const f=filiere(pct,work,mode==='t'&&R<=2*W+1),A=[];
+  A.push(['Filière travaillée',`<b>${f[0]}</b> — ${f[1]}`]);
+  A.push(['Récupération conseillée',restTxt(lv,work,pct)]);
+  A.push(['Ressenti visé (échelle de Borg)',`${RPE[lv]} sur la dernière répétition. Si tu ne tiens plus l'allure, arrête la série : la qualité avant la quantité.`]);
+  const vol=[[4,6],[8,12],[15,25],[25,40]][lv];
+  if(f[0].startsWith('Puissance'))A.push(['Volume conseillé',`${vol[0]} à ${vol[1]} min d'effort au total à cette intensité pour ton niveau.`]);
+  if(mode==='t'&&pct>110)A.push(['Le saviez-vous ?','Sur l\'intermittent très court au-dessus de 110 %, la récupération <b>passive</b> permet de tenir plus longtemps que la récupération active (Dupont et al., 2004). Le passif n\'est pas réservé aux débutants !']);
+  const fcT=fcTarget(pct,work);$('rFc').textContent=fcT[1];
+  A.splice(1,0,['Fréquence cardiaque visée',fcT[0]]);
+  if(baseLv===0)A.push(['Message du coach','Tu démarres : vise la réussite de chaque répétition. Sur herbe ou sur piste plutôt que sur bitume. On raccourcira la récupération dans 4 à 6 semaines.']);
+  if($('cDefi').checked)A.push(['🔥 Mode Défi','Tu travailles dans la zone du niveau au-dessus. Une séance défi de temps en temps, pas chaque semaine : c\'est là qu\'on progresse, et c\'est là qu\'on se blesse si on abuse.']);
+  $('adv').innerHTML=A.map(a=>`<div><span class="h">${a[0]}</span>${a[1]}</div>`).join('');
+}
+function restTxt(lv,work,pct){
+  if(mode==='d'&&pct>=115&&work<=25)return'<b>Récupération complète : 1\'30 à 3\'</b>, en marchant. En vitesse, on récupère totalement pour garder la qualité.';
+  if(mode==='d'&&pct>=110&&work>25)return`<b>Récupération longue : ${lv<2?'4 à 5\' en marchant':'3 à 4\' en trottinant'}</b>. Travail lactique : l'effort est très dur, la récup doit l'être moins.`;
+  const r=REST[lv],a=work*r.r[0],b=work*r.r[1];
+  let t=`<b>${a===b?fmt(a):fmt(a)+' à '+fmt(b)}</b> de récupération, ${r.nat}. ${r.why}`;
+  if(mode==='t'){const rec=Math.round(work*(r.r[0]+r.r[1])/2/5)*5||5;
+    t+= R<Math.round(work*r.r[0]-1)?` <br><span class="pill p-warn">Ton format ${W}/${R} est plus exigeant que conseillé : essaie ${W}/${rec}</span>`:
+        R>Math.round(work*r.r[1]+1)?` <br><span class="pill p-info">Ton format ${W}/${R} est plus confortable que conseillé : tu peux tenter ${W}/${rec}</span>`:` <br><span class="pill p-ok">Ton format ${W}/${R} est adapté ✓</span>`;}
+  return t;}
+
+/* ---------- Profil ---------- */
+document.querySelectorAll('input[name=obj]').forEach(r=>r.onchange=()=>{const o=objVal();$('objDist').classList.toggle('hide',o==='forme');$('objTime').classList.toggle('hide',o!=='temps');});
+$('pObjD').onchange=()=>$('objOther').classList.toggle('hide',$('pObjD').value!=='autre');
+$('goTests').onclick=()=>show('test');
+const objVal=()=>document.querySelector('input[name=obj]:checked').value;
+const PRAC={jamais:0,reprise:0,loisir:1,reg2:1,compreg:2,compnat:2,inter:3};
+
+$('analyse').onclick=analyse;
+function analyse(){
+  const age=+$('pAge').value||null,sex=$('pSex').value,prac=$('pPrac').value,soft=$('pSoft').checked,ses=Math.max(1,+$('pSes').value||2);
+  let vma=+$('pVma').value||null,fcm=+$('pFcm').value||null,fcr=+$('pFcr').value||null;
+  const notes=[],out=[];let lvP=PRAC[prac],why=[];
+  // chronos
+  const ch=[[10,parseT($('p10').value,false)],[21.0975,parseT($('pSemi').value,true)],[42.195,parseT($('pMara').value,true)]].filter(c=>c[1]);
+  let vmaSrc='saisie';
+  if(!vma&&ch.length){const c=ch[0],sp=c[0]/(c[1]/3600);vma=Math.round(sp/fracFor(c[0],lvP)*10)/10;vmaSrc=`estimée à partir de ton chrono (${c[0]===10?'10 km':c[0]<30?'semi':'marathon'})`;}
+  // niveau
+  let lv=lvP;why.push('ta pratique → '+LVN[lvP].split(' ·')[0]);
+  if(vma){const th=sex==='F'?[11,13.5,17.5]:[12,15,19.5];const lvV=vma<th[0]?0:vma<th[1]?1:vma<th[2]?2:3;why.push('ta VMA → '+LVN[lvV].split(' ·')[0]);lv=Math.min(lv,lvV);}
+  if(ses<=2&&lv>1){lv=1;why.push('2 séances/semaine ou moins → N2 maximum');}
+  else if(ses<=5&&lv>2){lv=2;why.push('moins de 6 séances/semaine → N3 maximum');}
+  if(age&&age>=60&&lv>2){lv=2;why.push('après 60 ans → N3 maximum, par prudence');}
+  if(soft){lv=0;why.push('démarrage en douceur demandé → N1');}
+  // FC
+  let fcEst=false;if(!fcm&&age){fcm=Math.round(208-.7*age);fcEst=true;}
+  if(!vma){$('profOut').innerHTML=`<div class="card"><h2>Il me manque ta VMA</h2><p>Saisis ta VMA ou un chrono récent, ou fais l'un des tests proposés. Sans elle, je ne peux pas calculer tes allures.</p><p>Niveau pressenti : <b>${LVN[lv]}</b></p><button class="btn" onclick="show('test')">Faire un test de VMA</button></div>`;return;}
+  // cohérence & profil endurant / véloce
+  let prof='';
+  ch.forEach(c=>{const sp=c[0]/(c[1]/3600),f=sp/vma,exp=fracFor(c[0],lv),est=sp/exp,nm=c[0]===10?'10 km':c[0]<30?'semi':'marathon';
+    if(vmaSrc==='saisie'&&Math.abs(est-vma)>1.5)notes.push(['warn',`Ton chrono sur ${nm} correspond plutôt à une VMA de ${kmh(est)}. Écart important avec ta VMA saisie : refais un test pour en être sûr.`]);
+    else if(vmaSrc==='saisie'){if(f>exp+.03)prof=`<b>Profil endurant</b> : sur ${nm}, tu tiens ${Math.round(f*100)} % de ta VMA (attendu ≈ ${Math.round(exp*100)} %). Ton point fort est l'endurance : <b>priorité au travail de VMA</b> pour relever ton plafond.`;
+      else if(f<exp-.03)prof=`<b>Profil véloce</b> : sur ${nm}, tu ne tiens que ${Math.round(f*100)} % de ta VMA (attendu ≈ ${Math.round(exp*100)} %). Tu as du moteur, mais il faut apprendre à le faire durer : <b>priorité au seuil et à l'endurance</b>.`;
+      else prof=`<b>Profil équilibré</b> : sur ${nm}, tu tiens ${Math.round(f*100)} % de ta VMA, conforme à ton niveau.`;}});
+  if(age&&age<16)notes.push(['info','Moins de 16 ans : priorité au jeu, à la vitesse courte et à la technique. Pas de travail lactique lourd.']);
+  if(age&&age>=50)notes.push(['info',`${age} ans : allonge un peu tes récupérations, garde 48 h entre deux séances intenses et soigne l'échauffement (15 à 20 min).`]);
+  if(lv===0)notes.push(['info','Un avis médical est conseillé avant de commencer le travail intense, surtout après un long arrêt ou avec du surpoids.']);
+  // zones
+  const Z=[['Récupération',55,65,50,60],['Capacité aérobie',65,75,60,75],['Seuil',80,90,80,90],['Puissance aérobie (VMA)',95,105,90,100],['Anaérobie lactique',110,125,null,null],['Vitesse',130,145,null,null]];
+  const fc=(a,b)=>{if(a==null||!fcm)return'—';if(fcr)return`${Math.round(fcr+a/100*(fcm-fcr))}–${Math.round(fcr+b/100*(fcm-fcr))}`;return`${Math.round(fcm*(a+10)/100)}–${Math.round(fcm*Math.min(100,b+8)/100)}`;};
+  // objectif
+  const obj=objVal();let objHtml='',objD=null,targetKmh=null;
+  if(obj!=='forme'){objD=$('pObjD').value==='autre'?+$('pObjDo').value:+$('pObjD').value;}
+  const dn=d=>d===21.0975?'semi-marathon':d===42.195?'marathon':(d+' km').replace('.',',');
+  if(obj==='forme')objHtml=`<p><b>Remise en forme.</b> Priorité à l'endurance tranquille et à un fractionné court ludique (côtes, 15/15) pour ressentir l'effort sans te mettre dans le rouge. L'objectif numéro 1 : la régularité, ${Math.min(ses,3)} séances par semaine.</p>`;
+  if(obj==='tenir'){const a=vma*.65,b=vma*.75;objHtml=`<p><b>Tenir ${dn(objD)}.</b> Allure de confort : <b>${pace(b)} à ${pace(a)}</b> (${kmh(a)}–${kmh(b)}). Temps estimé pour finir sans exploser : <b>${fmt(objD/b*3600)} à ${fmt(objD/a*3600)}</b>.</p><p>La sortie longue est ta séance clé : augmente sa durée d'environ 10 % par semaine. Le fractionné reste là pour te faire ressentir l'effort et rendre l'allure de confort… encore plus confortable.</p>`;}
+  if(obj==='temps'){const t=parseT($('pObjT').value,objD>15);
+    if(!t)objHtml=`<p class="muted">Indique ton temps visé pour que je vérifie s'il est réaliste.</p>`;
+    else{targetKmh=objD/(t/3600);const need=targetKmh/vma,exp=fracFor(objD,lv);let real=objD/(vma*exp)*3600;
+      const same=ch.find(c=>Math.abs(c[0]-objD)<.01);if(same)real=Math.min(real,same[1]);
+      let verdict;
+      if(need<=exp-.04)verdict=`<span class="pill p-info">Prudent</span> Tu peux viser plus ambitieux : ton potentiel actuel est autour de <b>${fmt(real)}</b>.`;
+      else if(need<=exp+.005)verdict=`<span class="pill p-ok">Réaliste ✓</span> C'est cohérent avec ta VMA et ton niveau.`;
+      else if(need<=exp+.03)verdict=`<span class="pill p-fire">Ambitieux mais jouable 🔥</span> Il faudra une préparation sérieuse : c'est le genre de défi qui fait progresser.`;
+      else verdict=`<span class="pill p-warn">Pas encore</span> Aujourd'hui, ton chrono réaliste est d'environ <b>${fmt(real)}</b>. Pour aller chercher ${fmt(t)}, il faut construire une VMA d'environ <b>${kmh(targetKmh/exp)}</b>. Ce n'est pas impossible : c'est une étape après l'autre.`;
+      objHtml=`<p><b>${dn(objD)} en ${fmt(t)}</b> → allure cible <b>${pace(targetKmh)}</b> (${kmh(targetKmh)}), soit <b>${Math.round(need*100)} % de ta VMA</b>. On tient habituellement ≈ ${Math.round(exp*100)} % sur cette distance à ton niveau.</p><p>${verdict}</p>`;}}
+  // semaine type
+  const week=buildWeek(lv,vma,ses,obj,objD,targetKmh);
+  out.push(`<div class="card"><span class="tag">Ton profil</span><h2>${LVN[lv]}</h2>
+    <p>VMA : <b>${kmh(vma)}</b> (${vmaSrc})${fcm?` · FC max : <b>${fcm} bpm</b>${fcEst?' (estimée, ± 10)':''}`:''}${fcr?` · FC repos : <b>${fcr} bpm</b>`:''}</p>
+    <p class="note">Niveau retenu au plus prudent : ${why.join(' · ')}. Tu peux monter d'un cran avec le mode Défi.</p>
+    ${prof?`<p>${prof}</p>`:''}
+    ${notes.map(n=>`<p><span class="pill p-${n[0]}">${n[0]==='warn'?'Attention':'Conseil'}</span> ${n[1]}</p>`).join('')}
+    ${fcr&&fcr<50&&lv<2?'<p class="note">Ta FC de repos est basse : bon signe pour ton moteur aérobie.</p>':''}
+  </div>`);
+  out.push(`<div class="card"><h2>Tes zones</h2><table><thead><tr><th>Zone</th><th>% VMA</th><th>Vitesse</th><th>Allure</th><th>FC</th></tr></thead><tbody>
+    ${Z.map(z=>`<tr><td>${z[0]}</td><td>${z[1]}–${z[2]} %</td><td>${(Math.round(vma*z[1]/10)/10+'').replace('.',',')}–${kmh(vma*z[2]/100)}</td><td>${pace(vma*z[2]/100)} à ${pace(vma*z[1]/100)}</td><td>${fc(z[3],z[4])}</td></tr>`).join('')}
+    ${targetKmh?`<tr><td><b>Allure spécifique</b></td><td>${Math.round(targetKmh/vma*100)} %</td><td>${kmh(targetKmh)}</td><td><b>${pace(targetKmh)}</b></td><td>—</td></tr>`:''}
+    </tbody></table><p class="note">${fcm?(fcr?'FC calculées avec la méthode de Karvonen (FC de réserve).':'Sans FC de repos, les FC sont un % de la FC max : moins précis. Ajoute ta FC de repos.'):'Ajoute ton âge ou ta FC max pour obtenir tes zones cardiaques.'} Sur le fractionné court, règle-toi à l'allure, pas au cardio.</p></div>`);
+  out.push(`<div class="card"><h2>Ton objectif</h2>${objHtml}</div>`);
+  out.push(`<div class="card"><h2>Ta semaine type (${ses} séance${ses>1?'s':''})</h2><ol class="week">${week}</ol>
+    <p class="note">Espace les séances intenses d'au moins 48 h. Ressenti visé sur les séances de qualité : ${RPE[lv]}.</p>
+    <button class="btn" id="toCalc">⚡ Calculer une séance avec mon profil</button></div>`);
+  $('profOut').innerHTML=out.join('');
+  $('toCalc').onclick=()=>{$('cVma').value=vma;$('cLv').value=lv+1;$('cAge').value=age||'';$('cFcm').value=+$('pFcm').value||'';$('cFcr').value=fcr||'';$('cDefi').checked=false;calc();show('calc');};
+  setVma(vma);
+  $('profOut').scrollIntoView({behavior:'smooth'});
+}
+
+function buildWeek(lv,vma,ses,obj,objD,tk){
+  const d=(p,s)=>Math.round(ms(vma,p)*s),t=(p,m)=>fmt(m/ms(vma,p));
+  const S={
+   court:()=>{const c=[[2,6,15,30,95,'marche'],[2,8,15,15,105,'passive puis trottinée'],[2,10,30,30,105,'trot léger'],[3,10,30,30,112,'trot']][lv];
+     return`<span class="tag">VMA courte</span><br>${c[0]} × (${c[1]} × ${c[2]}''/${c[3]}'') à ${c[4]} % → <b>${d(c[4],c[2])} m</b> par effort · récup ${c[5]} · 3' entre séries`;},
+   vmalong:()=>{const c=[[4,200,95,"2' marche"],[5,400,100,"1'30 trot"],[6,800,98,"2' trot"],[6,1000,100,"1'30 trot"]][lv];
+     return`<span class="tag">VMA longue</span><br>${c[0]} × ${c[1]} m à ${c[2]} % → <b>${t(c[2],c[1])}</b> chacun · récup ${c[3]}`;},
+   seuil:()=>{const c=[[3,4,80,"2'"],[3,6,85,"2'"],[3,10,87,"2'"],[2,15,88,"3'"]][lv];
+     return`<span class="tag">Seuil</span><br>${c[0]} × ${c[1]}' à ${c[2]} % → <b>${pace(vma*c[2]/100)}</b> · récup ${c[3]} trot`;},
+   cotes:()=>{const c=[[6,"20''",'marche rapide ou course souple'],[8,"30''",'course dynamique'],[10,"45''",'course puissante'],[10,"1'",'course puissante']][lv];
+     return`<span class="tag">Côtes</span><br>${c[0]} × ${c[1]} en ${c[2]} · récup descente ${lv?'en trottinant':'en marchant'} · ressenti ${RPE[lv]}`;},
+   spec:()=>{if(!tk)return S.seuil();const k=objD<=6?0:objD<=12?1:objD<=25?2:3;
+     const reps=[[[3,800],[4,1000],[5,1000],[6,1000]],[[3,1000],[4,1500],[4,2000],[5,2000]],[[2,2000],[3,3000],[3,4000],[4,5000]],[[2,3000],[3,4000],[3,5000],[3,6000]]][k][lv];
+     return`<span class="tag">Allure spécifique</span><br>${reps[0]} × ${reps[1]} m à allure objectif <b>${pace(tk)}</b> → ${fmt(reps[1]/(tk/3.6))} chacun · récup ${k<2?"1'30 à 2'":"2' à 3'"} trot`;},
+   longue:()=>{const L=objD&&objD>=21?['45 min à 1h','1h à 1h30','1h30 à 2h','2h à 2h30']:['30 à 40 min','45 min à 1h','1h à 1h30','1h30 à 2h'];
+     return`<span class="tag">Sortie longue</span><br>${L[lv]} à ${pace(vma*.75)} – ${pace(vma*.65)} (65–75 %)${lv===0?', en alternant course et marche si besoin':''}`;},
+   footing:n=>`<span class="tag">Footing${n>1?' × '+n:''}</span><br>${lv===0?'20 à 30 min course/marche':'30 à 45 min'} à ${pace(vma*.70)} – ${pace(vma*.60)} (60–70 %)${lv?', finir par 4 lignes droites':''}`};
+  let pr;
+  if(obj==='forme')pr=['court','cotes','seuil'];
+  else if(obj==='tenir')pr=['court','seuil','cotes'];
+  else if(obj==='temps'){pr=objD<=12?['vmalong','spec','court']:objD<=25?['seuil','spec','vmalong']:['spec','seuil','court'];if(lv===0)pr=['court','spec','cotes'];}
+  else pr=['court','seuil','vmalong'];
+  let q=ses<=2?1:ses<=4?2:3;if(lv===0)q=Math.min(q,2);
+  const L=[];for(let i=0;i<q;i++)L.push(S[pr[i]]());
+  let rest=ses-q;if(rest>=1){L.push(S.longue());rest--;}
+  if(rest>0)L.push(S.footing(rest));
+  return L.map(x=>`<li>${x}</li>`).join('');}
+
+/* ---------- Filières ---------- */
+let gVma=null;function setVma(v){gVma=v;}
+function renderFil(){const v=gVma||+$('cVma').value||null;
+  $('filVmaTxt').textContent=v?`Allures calculées pour une VMA de ${kmh(v)}.`:'Saisis ta VMA pour voir tes allures.';
+  const al=(a,b)=>v?` → <b>${pace(v*b/100)} à ${pace(v*a/100)}</b>`:'';
+  const F=[
+   ['Capacité aérobie','60–75 %',al(65,75),'Construire le moteur : capillaires, mitochondries, utilisation des graisses. C\'est la base de tout, y compris pour le sprinteur.',
+    ['N1 : 20–30 min en alternant course et marche','N2 : footing 40–50 min','N3 : sortie longue 1h–1h30','N4 : 1h30–2h, volume hebdo élevé'],'Aisance respiratoire : tu peux parler. Ressenti 3–4/10.'],
+   ['Seuil / endurance active','80–90 %',al(80,90),'Repousser le seuil où l\'acide lactique s\'accumule : tenir une allure élevée plus longtemps. Clé du 10 km au marathon.',
+    ['N1 : 3 × 4\' à 80 %, récup 2\'','N2 : 3 × 6\' à 85 %','N3 : 3 × 10\' à 87 %','N4 : 2 × 15\' ou 40\' continu à 88 %'],'« Confortablement difficile » : phrases courtes. Ressenti 6–7/10.'],
+   ['Puissance aérobie (VMA)','95–110 % (jusqu\'à 130 % en intermittent très court)',al(95,105),'Relever le plafond : VO₂max. Intermittent court (10/10, 15/15, 30/30, 45/15) ou fractionné long (400 m à 1000 m). À 100 % de VMA, on tient 4 à 7 min (Billat).',
+    ['N1 : 2 × (6 × 15\'\'/30\'\' marche) à 95 %','N2 : 2 × (8 × 15/15) à 105 % ou 5 × 400 m','N3 : 2 × (10 × 30/30) à 105 % ou 6 × 800 m','N4 : 3 × (10 × 30/30) à 112 % ou 6 × 1000 m'],'Tu ne peux plus parler. Ressenti 8–9/10.'],
+   ['Anaérobie lactique','110–125 %',al(110,125),'Résister à l\'acidité musculaire. Utile pour le 800 m–1500 m, les fins de course et les sports collectifs.',
+    ['N1 : pas de travail spécifique, côtes courtes à la place','N2 : 4 × 200 m, récup 3\'','N3 : 6 × 300 m, récup 3–4\'','N4 : 2 × (3 × 400 m), récup longue'],'Jambes qui brûlent sur la fin. Ressenti 9/10.'],
+   ['Vitesse / alactique','> 125 %',al(125,145),'Explosivité, coordination, vitesse pure : efforts de moins de 10 s, récupération complète.',
+    ['N1 : 4 × 40 m accélérations progressives','N2 : 6 × 60 m, récup 2\'','N3 : 8 × 80 m, récup 2–3\'','N4 : départs, 60–150 m à vitesse max'],'Rapide mais relâché. Récupère complètement.'],
+   ['Allure spécifique','% selon l\'objectif',v?` → 10 km ≈ <b>${pace(v*.88)}</b> · semi ≈ <b>${pace(v*.83)}</b> · marathon ≈ <b>${pace(v*.77)}</b>`:'','Courir à l\'allure exacte de ta course objectif pour l\'automatiser. Renseigne ton objectif dans « Mieux vous connaître » pour ton allure précise.',
+    ['5 km : 4–6 × 1000 m','10 km : 4 × 2000 m','Semi : 3 × 3000–4000 m','Marathon : 3 × 5000 m'],'Le ressenti de ta course : à mémoriser.']];
+  $('filList').innerHTML=F.map(f=>`<div class="card fil"><h2>${f[0]}</h2><p><span class="pill p-fire">${f[1]}</span>${f[2]}</p><p>${f[3]}</p><h3>Formes d'exercices</h3><ul>${f[4].map(x=>`<li>${x}</li>`).join('')}</ul><p class="note">${f[5]}</p></div>`).join('');}
+
+/* ---------- Tests ---------- */
+let testV=null;
+document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{const k=b.dataset.test;
+  if(k==='6')testV=(+$('t6').value)/100;if(k==='12')testV=(+$('t12').value)/200;
+  if(k==='10'){const t=parseT($('t10').value,false);testV=t?10/(t/3600)/.88:0;}
+  if(testV>4&&testV<27){testV=Math.round(testV*10)/10;$('testOut').textContent=`VMA estimée : ${kmh(testV)}`;$('testUse').classList.remove('hide');}
+  else{$('testOut').textContent='Valeur incohérente, vérifie ta saisie.';$('testUse').classList.add('hide');}});
+$('testUse').onclick=()=>{$('cVma').value=testV;$('pVma').value=testV;setVma(testV);calc();show('prof');};
+
+calc();
+</script>
+</body>
+</html>
