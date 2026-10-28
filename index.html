@@ -198,10 +198,10 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
         <div class="row">
           <div><label>VMA (km/h)</label><input id="cVma" type="number" step="0.1" min="6" max="26" value="15"></div>
           <div><label>Niveau</label><select id="cLv">
-            <option value="1">N1 · Débutant / reprise</option>
-            <option value="2" selected>N2 · Loisir</option>
-            <option value="3">N3 · Confirmé</option>
-            <option value="4">N4 · Élite</option></select></div>
+            <option value="1">N1 · Débutant — VMA &lt; 12 (F &lt; 11)</option>
+            <option value="2" selected>N2 · Loisir — VMA 12–15 (F 11–13,5)</option>
+            <option value="3">N3 · Confirmé — VMA 15–19 (F 13,5–17)</option>
+            <option value="4">N4 · Élite — VMA &gt; 19 (F &gt; 17)</option></select></div>
         </div>
         <label>Fréquence cardiaque (facultatif) — pour connaître ta FC visée</label>
         <div class="row3">
@@ -209,6 +209,7 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
           <div><input id="cFcm" type="number" min="120" max="230" placeholder="FC max"></div>
           <div><input id="cFcr" type="number" min="30" max="110" placeholder="FC repos"></div>
         </div>
+        <p class="note" id="cLvHint" style="margin-top:4px"></p>
         <div class="check"><input type="checkbox" id="cDefi"><span><b>🔥 Mode Défi</b> — zone conseillée du niveau au-dessus, pour aller chercher le dépassement.</span></div>
       </div>
       <div class="card">
@@ -361,6 +362,7 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
 <section id="fil">
   <div class="card"><h2>Les filières énergétiques</h2>
     <p class="muted">Chaque filière correspond à une intensité et à des formes d'exercices. <span id="filVmaTxt">Saisis ta VMA dans le calcul direct ou le profil pour voir tes allures.</span></p>
+    <p class="note" style="margin-top:6px"><b>Les 4 niveaux :</b> N1 Débutant — VMA &lt; 12 km/h (femmes &lt; 11) · N2 Loisir — 12 à 15 (femmes 11 à 13,5) · N3 Confirmé — 15 à 19 (femmes 13,5 à 17) · N4 Élite — plus de 19 (femmes plus de 17). La VMA est un repère : la pratique, le nombre de séances et l'âge comptent aussi.</p>
   </div>
   <div id="filList"></div>
 </section>
@@ -430,6 +432,7 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
 <script>
 /* ---------- Données scientifiques ---------- */
 const LVN=['N1 · Débutant / reprise','N2 · Loisir','N3 · Confirmé','N4 · Élite'];
+const LVV=['VMA < 12 km/h (femmes < 11)','VMA 12 à 15 km/h (femmes 11 à 13,5)','VMA 15 à 19 km/h (femmes 13,5 à 17)','VMA > 19 km/h (femmes > 17)'];
 const RPE=['6–7/10','7–8/10','8–9/10','9/10'];
 // Intermittent (mode temps) : zone % VMA selon durée d'effort (s) et niveau
 const INT={10:[[95,105],[105,115],[110,120],[120,130]],15:[[95,100],[100,110],[105,115],[115,120]],20:[[92,100],[100,108],[105,112],[112,118]],30:[[90,95],[95,105],[100,110],[110,115]],45:[[85,92],[92,100],[95,105],[100,108]],60:[[85,90],[90,98],[95,102],[100,105]],90:[[82,88],[90,96],[93,100],[98,103]],120:[[80,88],[88,95],[92,98],[96,101]],180:[[78,85],[85,92],[90,96],[94,99]],300:[[75,82],[82,88],[87,92],[90,95]],600:[[70,78],[78,85],[84,89],[87,92]]};
@@ -574,6 +577,8 @@ function recAdvice(pct,work,lv,intermittent,kForce){
 function calc(){
   const vma=+$('cVma').value,lv=curLv(),baseLv=+$('cLv').value-1,pct=+$('cPct').value;
   $('pVal').textContent=pct+' %';
+  {const v0=+$('cVma').value,b=+$('cLv').value-1,th=[12,15,19],sug=v0?(v0<th[0]?0:v0<th[1]?1:v0<th[2]?2:3):null;
+   $('cLvHint').innerHTML=`Repère ${LVN[b].split(' ·')[0]} : ${LVV[b]}.`+(sug!=null&&sug!==b?` <span class="pill p-info">Avec ${String(v0).replace('.',',')} de VMA, le repère serait plutôt ${LVN[sug].split(' ·')[0]}</span>`:'');}
   if(!vma||vma<5){$('rBig').textContent='—';return;}
   const v=ms(vma,pct);let work,distM;
   if(mode==='t'){work=W;distM=v*W;$('rLab').textContent=`Distance à parcourir en ${W}''`;$('rBig').textContent=Math.round(distM)+' m';
@@ -636,7 +641,7 @@ function analyse(quiet){
   if(!vma&&ch.length){const c=ch[0],sp=c[0]/(c[1]/3600);vma=Math.round(sp/fracFor(c[0],lvP)*10)/10;vmaSrc=`estimée à partir de ton chrono (${c[0]===10?'10 km':c[0]<30?'semi':'marathon'})`;}
   // niveau
   let lv=lvP;why.push('ta pratique → '+LVN[lvP].split(' ·')[0]);
-  if(vma){const th=sex==='F'?[11,13.5,17.5]:[12,15,19.5];const lvV=vma<th[0]?0:vma<th[1]?1:vma<th[2]?2:3;why.push('ta VMA → '+LVN[lvV].split(' ·')[0]);lv=Math.min(lv,lvV);}
+  if(vma){const th=sex==='F'?[11,13.5,17]:[12,15,19];const lvV=vma<th[0]?0:vma<th[1]?1:vma<th[2]?2:3;why.push('ta VMA → '+LVN[lvV].split(' ·')[0]);lv=Math.min(lv,lvV);}
   if(ses<=2&&lv>1){lv=1;why.push('2 séances/semaine ou moins → N2 maximum');}
   else if(ses<=5&&lv>2){lv=2;why.push('moins de 6 séances/semaine → N3 maximum');}
   if(age&&age>=60&&lv>2){lv=2;why.push('après 60 ans → N3 maximum, par prudence');}
@@ -676,7 +681,7 @@ function analyse(quiet){
       objHtml=`<p><b>${dn(objD)} en ${fmt(t)}</b> → allure cible <b>${pace(targetKmh)}</b> (${kmh(targetKmh)}), soit <b>${Math.round(need*100)} % de ta VMA</b>. On tient habituellement ≈ ${Math.round(exp*100)} % sur cette distance à ton niveau.</p><p>${verdict}</p>`;}}
   // semaine type
   const week=buildWeek(lv,vma,ses,obj,objD,targetKmh);
-  out.push(`<div class="card"><span class="tag">Ton profil</span><h2>${LVN[lv]}</h2>
+  out.push(`<div class="card"><span class="tag">Ton profil</span><h2>${LVN[lv]}</h2><p class="note" style="margin-top:-6px">Repère du niveau : ${LVV[lv]}</p>
     <p>VMA : <b>${kmh(vma)}</b> (${vmaSrc})${fcm?` · FC max : <b>${fcm} bpm</b>${fcEst?' (estimée, ± 10)':''}`:''}${fcr?` · FC repos : <b>${fcr} bpm</b>`:''}</p>
     <p class="note">Niveau retenu au plus prudent : ${why.join(' · ')}. Tu peux monter d'un cran avec le mode Défi.</p>
     ${prof?`<p>${prof}</p>`:''}
@@ -846,7 +851,7 @@ function renderFil(){
    ['Allure spécifique','% selon l\'objectif',specHead,P.tk?'Courir à l\'allure exacte de ta course objectif pour l\'automatiser.':'Courir à l\'allure exacte de ta course objectif pour l\'automatiser. Renseigne un objectif chronométré dans « Mieux vous connaître » pour ton allure précise.',
     specEx,P.tk?fc(Math.round(P.tk/P.vma*100)-3,Math.min(100,Math.round(P.tk/P.vma*100)+2),'en fin de répétition, à allure objectif'):'','Le ressenti de ta course : à mémoriser.',!!P.tk]];
   const known=!!v;
-  $('filList').innerHTML=F.map(f=>`<div class="card fil"><h2>${f[0]}</h2><p><span class="pill p-fire">${f[1]}</span>${f[2]}</p><p>${f[3]}</p>${f[5]}<h3>Formes d'exercices</h3><ul class="lvl">${f[4].map((x,i)=>{const me=known&&f[7]&&i===lv;return`<li class="${known&&f[7]?(me?'me':'other'):''}">${x}${me?' <span class="pill p-fire">← ton niveau</span>':''}</li>`;}).join('')}</ul><p class="note">${f[6]}</p></div>`).join('');}
+  $('filList').innerHTML=F.map(f=>`<div class="card fil"><h2>${f[0]}</h2><p><span class="pill p-fire">${f[1]}</span>${f[2]}</p><p>${f[3]}</p>${f[5]}<h3>Formes d'exercices</h3><ul class="lvl">${f[4].map((x,i)=>{const me=known&&f[7]&&i===lv;return`<li class="${known&&f[7]?(me?'me':'other'):''}" title="${LVV[i]}">${x}${me?' <span class="pill p-fire">← ton niveau</span>':''}</li>`;}).join('')}</ul><p class="note">${f[6]}</p></div>`).join('');}
 
 /* ---------- Tests ---------- */
 let testV=null;
