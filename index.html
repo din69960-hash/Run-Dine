@@ -86,6 +86,12 @@ th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase}
 .hide{display:none!important}
 .week li{margin-bottom:10px}
 .week{padding-left:20px}
+details.wk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--bg2)}
+details.wk summary{cursor:pointer;font-weight:700;list-style:none}
+details.wk summary::before{content:"▸ ";color:var(--acc)}details.wk[open] summary::before{content:"▾ "}
+details.wk .wn{font-family:"Barlow Condensed";font-size:19px;color:var(--acc)}
+details.wk ol{margin:10px 0 0}
+@media print{details.wk{break-inside:avoid}}
 .tag{font-size:12px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.5px}
 .fil{border-left:5px solid var(--acc)}
 footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);font-size:13px}
@@ -274,6 +280,19 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
           <div id="objOther" class="hide"><label>Distance (km)</label><input id="pObjDo" type="number" step="0.1" min="1" max="200" value="15"></div>
         </div>
         <div id="objTime" class="hide"><label>Quel temps vises-tu ? (ex. 50:00 ou 1:45:00)</label><input id="pObjT" type="text" placeholder="ex. 50:00"></div>
+        <h3>Ton plan d'entraînement</h3>
+        <label>Durée du plan</label>
+        <select id="pPlan">
+          <option value="0">Pas de plan, juste ma semaine type</option>
+          <option value="4">4 semaines</option><option value="5">5 semaines</option>
+          <option value="6" selected>6 semaines</option><option value="8">8 semaines</option>
+        </select>
+        <label>Ta priorité</label>
+        <div class="radio">
+          <label><input type="radio" name="ori" value="auto" checked> Laisse le coach choisir (selon mon âge et ma pratique)</label>
+          <label><input type="radio" name="ori" value="vma"> Développer ma VMA (aller plus vite)</label>
+          <label><input type="radio" name="ori" value="tenir"> Tenir ma VMA plus longtemps (durer à haute allure)</label>
+        </div>
         <button class="btn" id="analyse">Analyser mon profil</button>
       </div>
     </div>
@@ -516,7 +535,8 @@ function analyse(){
   const dn=d=>d===21.0975?'semi-marathon':d===42.195?'marathon':(d+' km').replace('.',',');
   if(obj==='forme')objHtml=`<p><b>Remise en forme.</b> Priorité à l'endurance tranquille et à un fractionné court ludique (côtes, 15/15) pour ressentir l'effort sans te mettre dans le rouge. L'objectif numéro 1 : la régularité, ${Math.min(ses,3)} séances par semaine.</p>`;
   if(obj==='tenir'){const a=vma*.65,b=vma*.75;objHtml=`<p><b>Tenir ${dn(objD)}.</b> Allure de confort : <b>${pace(b)} à ${pace(a)}</b> (${kmh(a)}–${kmh(b)}). Temps estimé pour finir sans exploser : <b>${fmt(objD/b*3600)} à ${fmt(objD/a*3600)}</b>.</p><p>La sortie longue est ta séance clé : augmente sa durée d'environ 10 % par semaine. Le fractionné reste là pour te faire ressentir l'effort et rendre l'allure de confort… encore plus confortable.</p>`;}
-  if(obj==='temps'){const t=parseT($('pObjT').value,objD>15);
+  let goalT=null;
+  if(obj==='temps'){const t=parseT($('pObjT').value,objD>15);goalT=t;
     if(!t)objHtml=`<p class="muted">Indique ton temps visé pour que je vérifie s'il est réaliste.</p>`;
     else{targetKmh=objD/(t/3600);const need=targetKmh/vma,exp=fracFor(objD,lv);let real=objD/(vma*exp)*3600;
       const same=ch.find(c=>Math.abs(c[0]-objD)<.01);if(same)real=Math.min(real,same[1]);
@@ -543,30 +563,53 @@ function analyse(){
   out.push(`<div class="card"><h2>Ta semaine type (${ses} séance${ses>1?'s':''})</h2><ol class="week">${week}</ol>
     <p class="note">Espace les séances intenses d'au moins 48 h. Ressenti visé sur les séances de qualité : ${RPE[lv]}.</p>
     <button class="btn" id="toCalc">⚡ Calculer une séance avec mon profil</button></div>`);
+  const nW=+$('pPlan').value;
+  if(nW){const oc=document.querySelector('input[name=ori]:checked').value,O=orientation(oc,age,prac,lv);
+    const goalTxt=obj==='temps'&&targetKmh?`Ta course : <b>${dn(objD)} en ${fmt(goalT)}</b> à <b>${pace(targetKmh)}</b>. Les 2 jours avant : footing léger + 3 accélérations. Pars à ton allure, pas plus vite !`
+      :obj==='tenir'?`Test : courir <b>${dn(objD)}</b> à allure confort (${pace(vma*.72)}). Si tu termines en contrôle, c'est gagné.`
+      :`Test de VMA 6 minutes : cours le plus loin possible. Nouvelle VMA = distance ÷ 100. Compare à ${kmh(vma)} !`;
+    out.push(`<div class="card"><span class="tag">Ton plan</span><h2>${nW} semaines · ${O[0]==='vma'?'Développer la VMA':'Tenir la VMA'}</h2>
+      <p>${O[1]}</p>
+      <p class="note">Repère scientifique : la VMA (VO₂max) reste entraînable à tout âge, mais elle plafonne vers 25–30 ans et baisse ensuite d'environ 5 à 10 % par décennie (moins chez ceux qui s'entraînent). Chez un coureur expérimenté, les gains après 35–40 ans viennent surtout de la capacité à tenir un % élevé de sa VMA. Dans tous les cas, le plan commence par du développement de la VMA.</p>
+      ${buildPlan(nW,lv,vma,ses,obj,objD,targetKmh,O[0],goalTxt)}
+      <p class="note">Les séances deviennent plus exigeantes chaque semaine (plus de répétitions, % un peu plus élevés). Si une semaine est trop dure, refais-la avant de passer à la suivante : on progresse en réussissant ses séances.</p>
+      <button class="btn ghost noprint" onclick="document.querySelectorAll('details.wk').forEach(d=>d.open=true);window.print()">🖨️ Imprimer mon plan</button></div>`);}
   $('profOut').innerHTML=out.join('');
   $('toCalc').onclick=()=>{$('cVma').value=vma;$('cLv').value=lv+1;$('cAge').value=age||'';$('cFcm').value=+$('pFcm').value||'';$('cFcr').value=fcr||'';$('cDefi').checked=false;calc();show('calc');};
   setVma(vma);
   $('profOut').scrollIntoView({behavior:'smooth'});
 }
 
-function buildWeek(lv,vma,ses,obj,objD,tk){
-  const d=(p,s)=>Math.round(ms(vma,p)*s),t=(p,m)=>fmt(m/ms(vma,p));
+/* Séances paramétrées : s = charge (0 → 1), light = semaine allégée */
+function sessions(lv,vma,objD,tk,s,light){
+  const R=Math.round,f=light?.6:1,d=(p,sec)=>R(ms(vma,p)*sec),t=(p,m)=>fmt(m/ms(vma,p));
   const S={
-   court:()=>{const c=[[2,6,15,30,95,'marche'],[2,8,15,15,105,'passive puis trottinée'],[2,10,30,30,105,'trot léger'],[3,10,30,30,112,'trot']][lv];
-     return`<span class="tag">VMA courte</span><br>${c[0]} × (${c[1]} × ${c[2]}''/${c[3]}'') à ${c[4]} % → <b>${d(c[4],c[2])} m</b> par effort · récup ${c[5]} · 3' entre séries`;},
-   vmalong:()=>{const c=[[4,200,95,"2' marche"],[5,400,100,"1'30 trot"],[6,800,98,"2' trot"],[6,1000,100,"1'30 trot"]][lv];
-     return`<span class="tag">VMA longue</span><br>${c[0]} × ${c[1]} m à ${c[2]} % → <b>${t(c[2],c[1])}</b> chacun · récup ${c[3]}`;},
-   seuil:()=>{const c=[[3,4,80,"2'"],[3,6,85,"2'"],[3,10,87,"2'"],[2,15,88,"3'"]][lv];
-     return`<span class="tag">Seuil</span><br>${c[0]} × ${c[1]}' à ${c[2]} % → <b>${pace(vma*c[2]/100)}</b> · récup ${c[3]} trot`;},
-   cotes:()=>{const c=[[6,"20''",'marche rapide ou course souple'],[8,"30''",'course dynamique'],[10,"45''",'course puissante'],[10,"1'",'course puissante']][lv];
-     return`<span class="tag">Côtes</span><br>${c[0]} × ${c[1]} en ${c[2]} · récup descente ${lv?'en trottinant':'en marchant'} · ressenti ${RPE[lv]}`;},
+   court:()=>{const c=[[2,6,15,30,95,'marche',3],[2,8,15,15,105,'passive puis trottinée',4],[2,10,30,30,105,'trot léger',4],[3,10,30,30,112,'trot',4]][lv];
+     const n=Math.max(4,R((c[1]+c[6]*s)*f)),p=c[4]+R(3*s);
+     return`<span class="tag">VMA courte</span><br>${c[0]} × (${n} × ${c[2]}''/${c[3]}'') à ${p} % → <b>${d(p,c[2])} m</b> par effort · récup ${c[5]} · 3' entre séries`;},
+   vmalong:()=>{const c=[[4,200,95,"2' marche",3],[5,400,100,"1'30 trot",3],[6,800,98,"2' trot",2],[6,1000,100,"1'30 trot",2]][lv];
+     const n=Math.max(3,R((c[0]+c[4]*s)*f));
+     return`<span class="tag">VMA longue</span><br>${n} × ${c[1]} m à ${c[2]} % → <b>${t(c[2],c[1])}</b> chacun · récup ${c[3]}`;},
+   tenir:()=>{const c=[[3,2,90,"2' marche",2],[4,3,95,"1'30 trot",2],[5,3,95,"1'15 trot",2],[5,4,96,"1' trot",2]][lv];
+     const n=Math.max(2,R((c[0]+c[4]*s)*f));
+     return`<span class="tag">Tenir la VMA</span><br>${n} × ${c[1]}' à ${c[2]} % → <b>${pace(vma*c[2]/100)}</b> (≈ ${d(c[2],c[1]*60)} m) · récup ${c[3]} · objectif : rester à l'allure jusqu'au bout`;},
+   seuil:()=>{const c=[[3,4,80,"2'",2],[3,6,85,"2'",4],[3,10,87,"2'",5],[2,15,88,"3'",5]][lv];
+     const dur=R((c[1]+c[4]*s)*(light?.7:1));
+     return`<span class="tag">Seuil</span><br>${c[0]} × ${dur}' à ${c[2]} % → <b>${pace(vma*c[2]/100)}</b> · récup ${c[3]} trot`;},
+   cotes:()=>{const c=[[6,"20''",'marche rapide ou course souple',3],[8,"30''",'course dynamique',4],[10,"45''",'course puissante',4],[10,"1'",'course puissante',4]][lv];
+     const n=Math.max(4,R((c[0]+c[3]*s)*f));
+     return`<span class="tag">Côtes</span><br>${n} × ${c[1]} en ${c[2]} · récup descente ${lv?'en trottinant':'en marchant'} · ressenti ${RPE[lv]}`;},
    spec:()=>{if(!tk)return S.seuil();const k=objD<=6?0:objD<=12?1:objD<=25?2:3;
      const reps=[[[3,800],[4,1000],[5,1000],[6,1000]],[[3,1000],[4,1500],[4,2000],[5,2000]],[[2,2000],[3,3000],[3,4000],[4,5000]],[[2,3000],[3,4000],[3,5000],[3,6000]]][k][lv];
-     return`<span class="tag">Allure spécifique</span><br>${reps[0]} × ${reps[1]} m à allure objectif <b>${pace(tk)}</b> → ${fmt(reps[1]/(tk/3.6))} chacun · récup ${k<2?"1'30 à 2'":"2' à 3'"} trot`;},
-   longue:()=>{const L=objD&&objD>=21?['45 min à 1h','1h à 1h30','1h30 à 2h','2h à 2h30']:['30 à 40 min','45 min à 1h','1h à 1h30','1h30 à 2h'];
-     return`<span class="tag">Sortie longue</span><br>${L[lv]} à ${pace(vma*.75)} – ${pace(vma*.65)} (65–75 %)${lv===0?', en alternant course et marche si besoin':''}`;},
-   footing:n=>`<span class="tag">Footing${n>1?' × '+n:''}</span><br>${lv===0?'20 à 30 min course/marche':'30 à 45 min'} à ${pace(vma*.70)} – ${pace(vma*.60)} (60–70 %)${lv?', finir par 4 lignes droites':''}`};
-  let pr;
+     const n=Math.max(2,R((reps[0]+(k<2?2:1)*s)*f));
+     return`<span class="tag">Allure spécifique</span><br>${n} × ${reps[1]} m à allure objectif <b>${pace(tk)}</b> → ${fmt(reps[1]/(tk/3.6))} chacun · récup ${k<2?"1'30 à 2'":"2' à 3'"} trot`;},
+   longue:()=>{const base=objD&&objD>=21?[50,75,95,130]:[35,50,70,95];const m=R(base[lv]*(1+.35*s)*(light?.7:1)/5)*5;
+     return`<span class="tag">Sortie longue</span><br>${m>=60?Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'):m+' min'} à ${pace(vma*.75)} – ${pace(vma*.65)} (65–75 %)${lv===0?', en alternant course et marche si besoin':''}`;},
+   footing:n=>`<span class="tag">Footing${n>1?' × '+n:''}</span><br>${lv===0?'20 à 30 min course/marche':(light?'30 min':'30 à 45 min')} à ${pace(vma*.70)} – ${pace(vma*.60)} (60–70 %)${lv?', finir par 4 lignes droites':''}`};
+  return S;}
+
+function buildWeek(lv,vma,ses,obj,objD,tk){
+  const S=sessions(lv,vma,objD,tk,.3,false);let pr;
   if(obj==='forme')pr=['court','cotes','seuil'];
   else if(obj==='tenir')pr=['court','seuil','cotes'];
   else if(obj==='temps'){pr=objD<=12?['vmalong','spec','court']:objD<=25?['seuil','spec','vmalong']:['spec','seuil','court'];if(lv===0)pr=['court','spec','cotes'];}
@@ -576,6 +619,40 @@ function buildWeek(lv,vma,ses,obj,objD,tk){
   let rest=ses-q;if(rest>=1){L.push(S.longue());rest--;}
   if(rest>0)L.push(S.footing(rest));
   return L.map(x=>`<li>${x}</li>`).join('');}
+
+/* Orientation : développer la VMA ou tenir la VMA */
+function orientation(choice,age,prac,lv){
+  const young=prac==='jamais'||prac==='reprise'||prac==='loisir';
+  if(choice==='vma')return['vma','Tu as choisi de <b>développer ta VMA</b>.'];
+  if(choice==='tenir')return['tenir','Tu as choisi de travailler ta <b>capacité à tenir ta VMA</b>.'];
+  if(young||lv===0)return['vma',`Ta pratique est récente : ta VMA a encore une vraie marge de progression${age?', quel que soit ton âge':''}. <b>Priorité au développement de la VMA.</b>`];
+  if(!age||age<35)return['vma',`${age?'À '+age+' ans, ':''}la VMA est encore au cœur de sa période de progression. <b>Priorité au développement de la VMA.</b>`];
+  if(age<50)return['tenir',`À ${age} ans, avec plusieurs années de pratique, la VMA progresse moins vite, mais la capacité à la tenir progresse encore beaucoup. <b>On développe la VMA au début, puis on travaille à la tenir.</b>`];
+  return['tenir',`À ${age} ans, l'enjeu est de <b>maintenir ta VMA</b> (sans fractionné, elle baisse avec l'âge) et surtout de <b>la tenir plus longtemps</b>. On garde toujours une dose de VMA au début.`];}
+
+function planPhases(n){return{4:['vma','mixte','orient','affut'],5:['vma','vma','mixte','orient','affut'],6:['vma','vma','mixte','orient','orient','affut'],8:['vma','vma','mixte','allege','orient','orient','orient','affut']}[n];}
+
+function buildPlan(n,lv,vma,ses,obj,objD,tk,ori,goalTxt){
+  const ph=planPhases(n),build=ph.map((p,i)=>i).filter(i=>ph[i]!=='allege'&&ph[i]!=='affut');
+  const LAB={vma:'Développement de la VMA',mixte:'Transition',allege:'Semaine allégée — on assimile',
+    orient:ori==='vma'?'Renforcer la VMA':'Tenir la VMA plus longtemps',affut:obj==='temps'?'Affûtage & jour J':'Bilan & test'};
+  let q0=ses<=2?1:ses<=4?2:3;if(lv===0)q0=Math.min(q0,2);
+  return ph.map((p,i)=>{
+    const bi=build.indexOf(i),s=bi>=0?(build.length>1?bi/(build.length-1):.5):(p==='allege'?.2:.3),light=p==='allege'||p==='affut';
+    const S=sessions(lv,vma,objD,tk,s,light);
+    let pr;
+    if(p==='vma')pr=['court','vmalong','cotes'];
+    else if(p==='mixte')pr=ori==='vma'?['vmalong','court','seuil']:['court','tenir','seuil'];
+    else if(p==='orient')pr=ori==='vma'?['vmalong','court',tk?'spec':'cotes']:(tk?['tenir','spec','seuil']:['tenir','seuil','court']);
+    else if(p==='allege')pr=['court'];
+    else pr=[tk?'spec':'court'];
+    let q=p==='allege'||p==='affut'?1:q0;
+    const L=[];for(let k=0;k<q;k++)L.push(S[pr[k]]());
+    let rest=ses-q;
+    if(p==='affut'){L.push(`<span class="tag">${obj==='temps'?'Objectif':'Test'}</span><br>${goalTxt}`);rest--;}
+    if(rest>=1&&p!=='affut'){L.push(S.longue());rest--;}
+    if(rest>0)L.push(S.footing(rest));
+    return`<details class="wk"${i===0?' open':''}><summary><span class="wn">Semaine ${i+1}</span> · ${LAB[p]}</summary><ol class="week">${L.map(x=>`<li>${x}</li>`).join('')}</ol></details>`;}).join('');}
 
 /* ---------- Filières ---------- */
 let gVma=null;function setVma(v){gVma=v;}
