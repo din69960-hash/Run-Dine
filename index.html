@@ -101,6 +101,9 @@ th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase}
 #gate label{color:#9aa3b2}#gate input{background:#111;color:#fff;border-color:#333}
 #gate .seg{background:#111;border-color:#333;margin-bottom:10px}#gate .gsub button{font-size:13px;padding:8px}
 #gate .note{color:#9aa3b2}#gate a{color:#c5f02c}
+.gstep{display:grid;gap:12px;margin-top:8px}
+.gbig{width:100%;padding:18px;border-radius:14px;border:0;background:#c5f02c;color:#000;font:800 22px "Barlow Condensed",Inter,sans-serif;letter-spacing:.5px;cursor:pointer;text-transform:uppercase}
+.gbig.ghost2{background:transparent;color:#fff;border:2px solid #c5f02c}
 .gerr{color:#ff5a5f;font-weight:600;min-height:1em}
 #ubar{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);justify-content:flex-end}
 .lnk{background:none;border:1px solid var(--line);color:var(--txt);border-radius:999px;padding:5px 10px;font:600 12px Inter;cursor:pointer;margin:2px}
@@ -127,19 +130,25 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
 <div id="gate">
   <div class="gbox">
     <img src="logo.jpg" alt="Run Dine" class="glogo">
-    <div class="seg" id="gTabs"><button data-g="run" class="on">🏃 Coureur</button><button data-g="adm">🔑 Administrateur</button></div>
-    <div id="gRun">
-      <div class="seg gsub" id="gMode"><button data-m="in" class="on">Se connecter</button><button data-m="up">Première connexion</button></div>
-      <p class="note" id="gHint">Entre ton nom d'utilisateur et ton mot de passe.</p>
+    <div id="gStep1" class="gstep">
+      <button class="gbig" data-pick="run">🏃 Coureur</button>
+      <button class="gbig ghost2" data-pick="adm">🔑 Administrateur</button>
     </div>
-    <div id="gAdm" class="hide"><p class="note">Accès réservé à l'administrateur.</p></div>
-    <label>Nom d'utilisateur</label><input id="gUser" type="text" autocomplete="username" autocapitalize="none" placeholder="ex. kevin">
-    <label>Mot de passe</label><input id="gPass" type="password" autocomplete="current-password">
-    <div id="gConfWrap" class="hide"><label>Confirme le mot de passe</label><input id="gPass2" type="password" autocomplete="new-password"></div>
-    <button class="btn" id="gGo" style="width:100%">Se connecter</button>
-    <p id="gErr" class="gerr"></p>
-    <p class="note" id="gBoot" style="display:none"><a href="#" id="gBootLink">Première installation : créer le compte administrateur</a></p>
-    <button class="btn ghost hide" id="installBtn" style="width:100%">📲 Installer Run Dine sur mon téléphone</button>
+    <div id="gStep2" class="gstep hide">
+      <button class="gbig" data-mode="in">J'ai déjà un compte</button>
+      <button class="gbig ghost2" data-mode="up">Première connexion</button>
+    </div>
+    <div id="gForm" class="hide">
+      <h3 id="gTitle" style="color:#fff;margin:4px 0"></h3>
+      <p class="note" id="gHint"></p>
+      <label>Nom d'utilisateur</label><input id="gUser" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
+      <label>Mot de passe</label><input id="gPass" type="password" autocomplete="current-password">
+      <div id="gConfWrap" class="hide"><label>Confirme le mot de passe</label><input id="gPass2" type="password" autocomplete="new-password"></div>
+      <button class="btn" id="gGo" style="width:100%">Se connecter</button>
+      <p id="gErr" class="gerr"></p>
+    </div>
+    <button class="lnk hide" id="gBack" style="color:#fff;margin-top:6px">← Retour</button>
+    <button class="btn ghost hide" id="installBtn" style="width:100%;color:#fff">📲 Installer Run Dine sur mon téléphone</button>
   </div>
 </div>
 <header>
@@ -831,14 +840,19 @@ function put(o,ids){ids.forEach(i=>{const e=$(i);if(e&&o&&i in o){if(e.type==='c
 async function fnCall(body){const{data,error}=await SB.functions.invoke('rd-auth',{body});
   if(error){let m=error.message;try{const j=await error.context.json();m=j.error||m;}catch(_){}throw new Error(m);}if(data&&data.error)throw new Error(data.error);return data;}
 
-/* ----- écran de connexion ----- */
-function gSet(){$('gRun').classList.toggle('hide',gTab!=='run');$('gAdm').classList.toggle('hide',gTab!=='adm');
-  const up=gTab==='run'&&gMode==='up';$('gConfWrap').classList.toggle('hide',!up);
-  $('gGo').textContent=up?'Créer mon compte':'Se connecter';$('gBoot').style.display=gTab==='adm'?'block':'none';
-  $('gHint').textContent=up?'Choisis un nom d\'utilisateur (3 à 30 caractères) et un mot de passe (6 minimum). Tu les utiliseras pour retrouver tes données.':'Entre ton nom d\'utilisateur et ton mot de passe.';
-  $('gPass').autocomplete=up?'new-password':'current-password';$('gErr').textContent='';}
-$('gTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{gTab=b.dataset.g;$('gTabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));gSet();});
-$('gMode').querySelectorAll('button').forEach(b=>b.onclick=()=>{gMode=b.dataset.m;$('gMode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));gSet();});
+/* ----- écran de connexion : 1) Coureur / Administrateur  2) compte existant / première connexion  3) formulaire ----- */
+let gStep=1;
+function gShow(step){gStep=step;$('gStep1').classList.toggle('hide',step!==1);$('gStep2').classList.toggle('hide',step!==2);
+  $('gForm').classList.toggle('hide',step!==3);$('gBack').classList.toggle('hide',step===1);$('gErr').textContent='';
+  if(step===3){const up=gTab==='run'&&gMode==='up';
+    $('gTitle').textContent=gTab==='adm'?'Administrateur':up?'Première connexion':'Connexion coureur';
+    $('gHint').textContent=up?'Choisis ton nom d\'utilisateur (3 à 30 caractères : lettres, chiffres, . _ -) et un mot de passe (6 minimum). Note-les bien !':'Entre ton nom d\'utilisateur et ton mot de passe.';
+    $('gConfWrap').classList.toggle('hide',!up);$('gGo').textContent=up?'Créer mon compte':'Se connecter';
+    $('gPass').autocomplete=up?'new-password':'current-password';$('gPass').value='';$('gPass2').value='';setTimeout(()=>$('gUser').focus(),50);}}
+document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{gTab=b.dataset.pick;if(gTab==='adm'){gMode='in';gShow(3);}else gShow(2);});
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{gMode=b.dataset.mode;gShow(3);});
+$('gBack').onclick=()=>gShow(gStep===3&&gTab==='run'?2:1);
+function gSet(){gShow(1);}
 $('gPass').onkeydown=$('gPass2').onkeydown=e=>{if(e.key==='Enter')$('gGo').click();};
 $('gGo').onclick=async()=>{const u=$('gUser').value.trim(),p=$('gPass').value,err=$('gErr');err.textContent='';
   if(!SB){err.textContent='Connexion au serveur impossible. Vérifie ta connexion internet.';return;}
@@ -850,10 +864,6 @@ $('gGo').onclick=async()=>{const u=$('gUser').value.trim(),p=$('gPass').value,er
     if(error)throw new Error('Nom d\'utilisateur ou mot de passe incorrect.');
     const ok=await startSession(gTab==='adm');if(!ok)throw new Error('Ce compte n\'est pas administrateur.');
   }catch(e){err.textContent=e.message;}finally{$('gGo').disabled=false;}};
-$('gBootLink').onclick=async e=>{e.preventDefault();const u=$('gUser').value.trim(),p=$('gPass').value;
-  if(!u||!p){$('gErr').textContent='Choisis d\'abord ton nom d\'administrateur et ton mot de passe dans les champs ci-dessus, puis clique à nouveau.';return;}
-  try{await fnCall({action:'bootstrap_admin',username:u,password:p});await SB.auth.signInWithPassword({email:mail(u),password:p});await startSession(true);}
-  catch(x){$('gErr').textContent=x.message;}};
 
 /* ----- session ----- */
 async function startSession(needAdmin){
