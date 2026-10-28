@@ -565,9 +565,9 @@ function recAdvice(pct,work,lv,intermittent,kForce){
    case'puissInt':{const rat=work>40?[[.75,1],[.5,.75],[.33,.5],[.25,.33]][lv]:[[2,3],[1,1.5],[1,1],[.5,1]][lv];
      return{lo:r5(work*rat[0]),hi:r5(work*rat[1]),comp:'incomplète (voulue)',nat:pct>110?'passive (debout ou marche)':(lv<2?'passive puis trottinée':'trot léger'),why:'En intermittent, la récup reste courte même au-dessus de la VMA : c\'est l\'enchaînement qui fait monter la consommation d\'O₂. Au-dessus de 110 %, la récup <b>passive</b> permet de tenir plus longtemps (Dupont et al. 2004).'};}
    case'puiss':{
-     if(work>240)return{lo:120,hi:capP,comp:'large',nat:lv<2?'marche puis trot':'trot léger',why:`Fractionné long (${fmt(work)}) en puissance aérobie : récup de 2 à 3', active de préférence pour que le VO₂ remonte vite à la répétition suivante. Inutile d'aller au-delà de ${N1?'4':'3'}' : en 3 min, les réserves d'énergie rapide (phosphocréatine) sont presque rechargées.`};
+     if(work>240)return{lo:120,hi:capP,comp:'large',nat:lv<2?'marche puis trot':'trot léger',why:`Fractionné long (${fmt(work)}) en puissance aérobie : la <b>priorité est de répéter la même vitesse</b>. Récup de 2 à 3', en trottinant de préférence (le VO₂ remonte plus vite à la répétition suivante). Inutile d'aller au-delà de ${N1?'4':'3'}' : en 3 min, les réserves d'énergie rapide (phosphocréatine) sont presque rechargées.`};
      if(work>45){const lo=cl(r5(work*.75*F),60,capP),hi=cl(r5(work*1*F),75,capP);
-       return{lo,hi,comp:'large',nat:lv<2?'marche puis trot':'trot léger',why:'Fractionné en puissance aérobie : récup proche de la durée de l\'effort (0,75 à 1 fois), pour garder la même vitesse à chaque répétition tout en gardant le cœur assez haut. Plafond 3\'.'};}
+       return{lo,hi,comp:'large',nat:lv<2?'marche puis trot':'trot léger',why:'Puissance aérobie : la <b>priorité est de répéter la même vitesse</b> à chaque répétition. Récup proche de la durée de l\'effort (0,75 à 1 fois), plafond 3\'. Fais-la en <b>trottinant</b> plutôt qu\'arrêté : sans chercher à garder le cœur haut, éviter qu\'il redescende complètement aide à retrouver plus vite ton VO₂max à la répétition suivante (Buchheit & Laursen 2013).'};}
      const lo=cl(r5(work*1.5*F),45,capP),hi=cl(r5(work*2.5*F),60,capP);
      return{lo,hi,comp:'large',nat:'marche ou trot très lent',why:'Répétitions très courtes au-dessus de ta VMA : récup de 1,5 à 2,5 fois l\'effort, pour garder la qualité. Plafond 3\'.'};}
    case'trop':return{lo:150,hi:capP,comp:'complète',nat:'marche puis trot',why:'Si tu gardes cette intensité, récupère au maximum (2\'30 à 3\') et prévois peu de répétitions. Mieux : baisse l\'allure dans la zone de puissance indiquée ci-dessus.'};
@@ -606,7 +606,7 @@ function calc(){
    if(ty){const wu=WU(ty,baseLv,vma,+$('cAge').value||null);A.push(['Échauffement avant la séance',`🔥 ${wu.txt}.<br>🧊 Retour au calme : ${wu.rac}.`]);}
    else A.push(['Échauffement','Pas d\'échauffement à part : démarre les 10 premières minutes plus lentement.']);}
   A.push(['Ressenti visé (échelle de Borg)',`${RPE[lv]} sur la dernière répétition. Si tu ne tiens plus l'allure, arrête la série : la qualité avant la quantité.`]);
-  const vol=[[4,6],[8,12],[15,25],[25,40]][lv];
+  const vol=[[4,8],[8,12],[12,18],[15,24]][lv];
   if(['puiss','puissInt','haut','hautInt','tenir','tenirInt'].includes(f[2]))A.push(['Volume conseillé',`${vol[0]} à ${vol[1]} min d'effort au total à cette intensité pour ton niveau.`]);
     const fcT=fcTarget(pct,work);$('rFc').textContent=fcT[1];
   A.splice(1,0,['Fréquence cardiaque visée',fcT[0]]);
