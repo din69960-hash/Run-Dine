@@ -86,6 +86,7 @@ th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase}
 .hide{display:none!important}
 .week li{margin-bottom:10px}
 .week{padding-left:20px}
+ul.lvl li{margin-bottom:6px}ul.lvl li.other{color:var(--muted);font-size:14px}ul.lvl li.me{font-weight:600;background:rgba(255,107,44,.1);border-radius:8px;padding:4px 6px}
 details.wk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--bg2)}
 details.wk summary{cursor:pointer;font-weight:700;list-style:none}
 details.wk summary::before{content:"▸ ";color:var(--acc)}details.wk[open] summary::before{content:"▾ "}
@@ -576,7 +577,7 @@ function analyse(){
       <button class="btn ghost noprint" onclick="document.querySelectorAll('details.wk').forEach(d=>d.open=true);window.print()">🖨️ Imprimer mon plan</button></div>`);}
   $('profOut').innerHTML=out.join('');
   $('toCalc').onclick=()=>{$('cVma').value=vma;$('cLv').value=lv+1;$('cAge').value=age||'';$('cFcm').value=+$('pFcm').value||'';$('cFcr').value=fcr||'';$('cDefi').checked=false;calc();show('calc');};
-  setVma(vma);
+  setProf({vma,lv,fcm,fcr,fcEst,tk:targetKmh,objD:obj==='temps'?objD:null,src:'profil'});
   $('profOut').scrollIntoView({behavior:'smooth'});
 }
 
@@ -655,24 +656,50 @@ function buildPlan(n,lv,vma,ses,obj,objD,tk,ori,goalTxt){
     return`<details class="wk"${i===0?' open':''}><summary><span class="wn">Semaine ${i+1}</span> · ${LAB[p]}</summary><ol class="week">${L.map(x=>`<li>${x}</li>`).join('')}</ol></details>`;}).join('');}
 
 /* ---------- Filières ---------- */
-let gVma=null;function setVma(v){gVma=v;}
-function renderFil(){const v=gVma||+$('cVma').value||null;
-  $('filVmaTxt').textContent=v?`Allures calculées pour une VMA de ${kmh(v)}.`:'Saisis ta VMA pour voir tes allures.';
+let gProf=null;function setVma(v){if(gProf)gProf.vma=v;else gProf={vma:v,src:'test'};}
+function setProf(p){gProf=p;}
+/* Profil utilisé par l'onglet Filières : profil analysé, sinon calcul direct */
+function filProfile(){
+  if(gProf&&gProf.src==='profil')return gProf;
+  const age=+$('cAge').value||null;let fcm=+$('cFcm').value||null;const est=!fcm&&!!age;if(!fcm&&age)fcm=Math.round(208-.7*age);
+  return{vma:(gProf&&gProf.vma)||+$('cVma').value||null,lv:+$('cLv').value-1,fcm,fcr:+$('cFcr').value||null,fcEst:est,tk:null,objD:null,src:'calc'};}
+function fcRange(a,b,P){
+  if(!P.fcm)return`≈ ${Math.min(100,Math.round(.64*a+37))}–${Math.min(100,Math.round(.64*b+37))} % de ta FC max`;
+  if(P.fcr)return`<b>${Math.round(P.fcr+a/100*(P.fcm-P.fcr))}–${Math.min(P.fcm,Math.round(P.fcr+b/100*(P.fcm-P.fcr)))} bpm</b> (Karvonen)`;
+  return`<b>${Math.round(P.fcm*Math.min(100,.64*a+37)/100)}–${Math.round(P.fcm*Math.min(100,.64*b+37)/100)} bpm</b>`;}
+function renderFil(){
+  const P=filProfile(),v=P.vma,lv=P.lv;
+  $('filVmaTxt').innerHTML=v?`Calculé pour <b>${P.src==='profil'?'ton profil':'les valeurs du calcul direct'}</b> : VMA ${kmh(v)}, niveau <b>${LVN[lv]}</b>${P.fcm?`, FC max ${P.fcm}${P.fcEst?' (estimée)':''}${P.fcr?', FC repos '+P.fcr:''}`:''}. Ta ligne est mise en avant.`:'Saisis ta VMA (calcul direct ou profil) pour voir tes allures, tes temps et ta FC.';
   const al=(a,b)=>v?` → <b>${pace(v*b/100)} à ${pace(v*a/100)}</b>`:'';
+  const T=(p,m)=>v?` → <b>${fmt(m/ms(v,p))}</b>`:'',Dm=(p,s)=>v?` → <b>${Math.round(ms(v,p)*s)} m</b>`:'',Pa=p=>v?` → <b>${pace(v*p/100)}</b>`:'';
+  const fc=(a,b,txt)=>v?`<p>❤️ FC visée : ${fcRange(a,b,P)}${txt?' · '+txt:''}</p>`:'';
+  // allure spécifique
+  let specHead='',specEx;
+  if(v&&P.tk){const k=P.objD<=6?0:P.objD<=12?1:P.objD<=25?2:3,dn=P.objD===21.0975?'semi':P.objD===42.195?'marathon':(P.objD+' km').replace('.',',');
+    const R=[[[3,800],[4,1000],[5,1000],[6,1000]],[[3,1000],[4,1500],[4,2000],[5,2000]],[[2,2000],[3,3000],[3,4000],[4,5000]],[[2,3000],[3,4000],[3,5000],[3,6000]]][k];
+    specHead=` → ton objectif ${dn} : <b>${pace(P.tk)}</b> (${Math.round(P.tk/v*100)} % VMA)`;
+    specEx=R.map((r,i)=>`N${i+1} : ${r[0]} × ${r[1]} m à ${pace(P.tk)} → <b>${fmt(r[1]/(P.tk/3.6))}</b>`);}
+  else{const fr=v?FRAC[10][lv]:.88,fs=v?FRAC[21.0975][lv]:.83,fm=v?FRAC[42.195][lv]:.77;
+    specHead=v?` → 10 km ≈ <b>${pace(v*fr)}</b> · semi ≈ <b>${pace(v*fs)}</b> · marathon ≈ <b>${pace(v*fm)}</b>`:'';
+    specEx=[`5 km : 4–6 × 1000 m${v?' à '+pace(v*FRAC[5][lv]):''}`,`10 km : 4 × 2000 m${v?' à '+pace(v*fr):''}`,`Semi : 3 × 3000–4000 m${v?' à '+pace(v*fs):''}`,`Marathon : 3 × 5000 m${v?' à '+pace(v*fm):''}`];}
   const F=[
    ['Capacité aérobie','60–75 %',al(65,75),'Construire le moteur : capillaires, mitochondries, utilisation des graisses. C\'est la base de tout, y compris pour le sprinteur.',
-    ['N1 : 20–30 min en alternant course et marche','N2 : footing 40–50 min','N3 : sortie longue 1h–1h30','N4 : 1h30–2h, volume hebdo élevé'],'Aisance respiratoire : tu peux parler. Ressenti 3–4/10.'],
+    ['N1 : 20–30 min en alternant course et marche','N2 : footing 40–50 min','N3 : sortie longue 1h–1h30','N4 : 1h30–2h, volume hebdo élevé'],fc(65,75),'Aisance respiratoire : tu peux parler. Ressenti 3–4/10.',true],
    ['Seuil / endurance active','80–90 %',al(80,90),'Repousser le seuil où l\'acide lactique s\'accumule : tenir une allure élevée plus longtemps. Clé du 10 km au marathon.',
-    ['N1 : 3 × 4\' à 80 %, récup 2\'','N2 : 3 × 6\' à 85 %','N3 : 3 × 10\' à 87 %','N4 : 2 × 15\' ou 40\' continu à 88 %'],'« Confortablement difficile » : phrases courtes. Ressenti 6–7/10.'],
+    [`N1 : 3 × 4' à 80 %${Pa(80)}, récup 2'`,`N2 : 3 × 6' à 85 %${Pa(85)}, récup 2'`,`N3 : 3 × 10' à 87 %${Pa(87)}, récup 2'`,`N4 : 2 × 15' ou 40' continu à 88 %${Pa(88)}`],fc(80,90),'« Confortablement difficile » : phrases courtes. Ressenti 6–7/10.',true],
    ['Puissance aérobie (VMA)','95–110 % (jusqu\'à 130 % en intermittent très court)',al(95,105),'Relever le plafond : VO₂max. Intermittent court (10/10, 15/15, 30/30, 45/15) ou fractionné long (400 m à 1000 m). À 100 % de VMA, on tient 4 à 7 min (Billat).',
-    ['N1 : 2 × (6 × 15\'\'/30\'\' marche) à 95 %','N2 : 2 × (8 × 15/15) à 105 % ou 5 × 400 m','N3 : 2 × (10 × 30/30) à 105 % ou 6 × 800 m','N4 : 3 × (10 × 30/30) à 112 % ou 6 × 1000 m'],'Tu ne peux plus parler. Ressenti 8–9/10.'],
+    [`N1 : 2 × (6 × 15''/30'' marche) à 95 %${Dm(95,15)} · ou 4 × 200 m à 95 %${T(95,200)}`,`N2 : 2 × (8 × 15/15) à 105 %${Dm(105,15)} · ou 5 × 400 m à 100 %${T(100,400)}`,`N3 : 2 × (10 × 30/30) à 105 %${Dm(105,30)} · ou 6 × 800 m à 98 %${T(98,800)}`,`N4 : 3 × (10 × 30/30) à 112 %${Dm(112,30)} · ou 6 × 1000 m à 100 %${T(100,1000)}`],
+    fc(92,100,'sur le fractionné long ; en intermittent court, le cœur n\'a pas le temps d\'y monter'),'Tu ne peux plus parler. Ressenti 8–9/10.',true],
+   ['Tenir la VMA','90–96 %',al(90,96),'Rester longtemps près de ta VMA : répétitions de 2 à 4 min avec récupération courte. C\'est ce qui fait la différence sur 5 et 10 km, et ce qui progresse encore après 35–40 ans.',
+    [`N1 : 3 × 2' à 90 %${Pa(90)}, récup 2' marche`,`N2 : 4 × 3' à 95 %${Pa(95)}, récup 1'30`,`N3 : 5 × 3' à 95 %${Pa(95)}, récup 1'15`,`N4 : 5 × 4' à 96 %${Pa(96)}, récup 1'`],fc(88,96),'Dur mais contrôlé : la dernière répétition doit être à la même allure que la première. Ressenti 8/10.',true],
    ['Anaérobie lactique','110–125 %',al(110,125),'Résister à l\'acidité musculaire. Utile pour le 800 m–1500 m, les fins de course et les sports collectifs.',
-    ['N1 : pas de travail spécifique, côtes courtes à la place','N2 : 4 × 200 m, récup 3\'','N3 : 6 × 300 m, récup 3–4\'','N4 : 2 × (3 × 400 m), récup longue'],'Jambes qui brûlent sur la fin. Ressenti 9/10.'],
+    ['N1 : pas de travail spécifique, côtes courtes à la place',`N2 : 4 × 200 m à 115 %${T(115,200)}, récup 3'`,`N3 : 6 × 300 m à 112 %${T(112,300)}, récup 3–4'`,`N4 : 2 × (3 × 400 m) à 110 %${T(110,400)}, récup longue`],v?'<p class="muted">❤️ FC : non pertinente, effort trop court. Règle-toi au chrono.</p>':'','Jambes qui brûlent sur la fin. Ressenti 9/10.',true],
    ['Vitesse / alactique','> 125 %',al(125,145),'Explosivité, coordination, vitesse pure : efforts de moins de 10 s, récupération complète.',
-    ['N1 : 4 × 40 m accélérations progressives','N2 : 6 × 60 m, récup 2\'','N3 : 8 × 80 m, récup 2–3\'','N4 : départs, 60–150 m à vitesse max'],'Rapide mais relâché. Récupère complètement.'],
-   ['Allure spécifique','% selon l\'objectif',v?` → 10 km ≈ <b>${pace(v*.88)}</b> · semi ≈ <b>${pace(v*.83)}</b> · marathon ≈ <b>${pace(v*.77)}</b>`:'','Courir à l\'allure exacte de ta course objectif pour l\'automatiser. Renseigne ton objectif dans « Mieux vous connaître » pour ton allure précise.',
-    ['5 km : 4–6 × 1000 m','10 km : 4 × 2000 m','Semi : 3 × 3000–4000 m','Marathon : 3 × 5000 m'],'Le ressenti de ta course : à mémoriser.']];
-  $('filList').innerHTML=F.map(f=>`<div class="card fil"><h2>${f[0]}</h2><p><span class="pill p-fire">${f[1]}</span>${f[2]}</p><p>${f[3]}</p><h3>Formes d'exercices</h3><ul>${f[4].map(x=>`<li>${x}</li>`).join('')}</ul><p class="note">${f[5]}</p></div>`).join('');}
+    ['N1 : 4 × 40 m accélérations progressives',`N2 : 6 × 60 m à 125 %${T(125,60)}, récup 2'`,`N3 : 8 × 80 m à 130 %${T(130,80)}, récup 2–3'`,'N4 : départs, 60–150 m à vitesse max'],'','Rapide mais relâché. Récupère complètement.',true],
+   ['Allure spécifique','% selon l\'objectif',specHead,P.tk?'Courir à l\'allure exacte de ta course objectif pour l\'automatiser.':'Courir à l\'allure exacte de ta course objectif pour l\'automatiser. Renseigne un objectif chronométré dans « Mieux vous connaître » pour ton allure précise.',
+    specEx,'','Le ressenti de ta course : à mémoriser.',!!P.tk]];
+  const known=!!v;
+  $('filList').innerHTML=F.map(f=>`<div class="card fil"><h2>${f[0]}</h2><p><span class="pill p-fire">${f[1]}</span>${f[2]}</p><p>${f[3]}</p>${f[5]}<h3>Formes d'exercices</h3><ul class="lvl">${f[4].map((x,i)=>{const me=known&&f[7]&&i===lv;return`<li class="${known&&f[7]?(me?'me':'other'):''}">${x}${me?' <span class="pill p-fire">← ton niveau</span>':''}</li>`;}).join('')}</ul><p class="note">${f[6]}</p></div>`).join('');}
 
 /* ---------- Tests ---------- */
 let testV=null;
