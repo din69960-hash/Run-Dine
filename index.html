@@ -710,6 +710,7 @@ function analyse(quiet){
   $('profOut').innerHTML=out.join('');
   $('toCalc').onclick=()=>{$('cVma').value=vma;$('cLv').value=lv+1;$('cAge').value=age||'';$('cFcm').value=+$('pFcm').value||'';$('cFcr').value=fcr||'';$('cDefi').checked=false;calc();show('calc');};
   setProf({vma,lv,fcm,fcr,fcEst,tk:targetKmh,objD:obj==='temps'?objD:null,src:'profil'});
+  $('cLv').value=lv+1;if(!$('cVma').value||!quiet)$('cVma').value=vma;if(age)$('cAge').value=age;if(+$('pFcm').value)$('cFcm').value=$('pFcm').value;if(fcr)$('cFcr').value=fcr;calc();
   window.lastResume={niveau:LVN[lv],vma:Math.round(vma*10)/10,objectif:obj==='forme'?'Remise en forme':obj==='tenir'?'Tenir '+dn(objD):(goalT?dn(objD)+' en '+fmt(goalT):dn(objD))};
   if(!quiet){$('profOut').scrollIntoView({behavior:'smooth'});if(typeof scheduleSave==='function')scheduleSave();}
 }
@@ -924,6 +925,7 @@ async function loadData(){loading=true;
     if(data.profil&&data.profil.obj){const r=document.querySelector(`input[name=obj][value="${data.profil.obj}"]`);if(r){r.checked=true;r.onchange();}}
     if(data.profil&&data.profil.ori){const r=document.querySelector(`input[name=ori][value="${data.profil.ori}"]`);if(r)r.checked=true;}
     $('objOther').classList.toggle('hide',$('pObjD').value!=='autre');
+    syncFill();
     calc();if(data.profil&&(data.profil.pVma||data.profil.p10||data.profil.pSemi||data.profil.pMara)){try{analyse(true);}catch(_){}}}
   loading=false;}
 function collectProfil(){const o=grab(PF);o.obj=objVal();o.ori=document.querySelector('input[name=ori]:checked').value;return o;}
@@ -969,6 +971,13 @@ async function doInstall(){if(deferredPrompt){deferredPrompt.prompt();await defe
   else alert('Sur iPhone : touche le bouton Partager (carré avec une flèche) en bas de Safari, puis « Sur l\'écran d\'accueil ».\n\nSur Android : menu ⋮ de Chrome, puis « Ajouter à l\'écran d\'accueil » ou « Installer l\'application ».');}
 $('installBtn').onclick=doInstall;$('installNav').onclick=doInstall;
 
+
+/* ----- Champs communs : Calcul direct <-> Mieux vous connaître (synchronisés dans les deux sens) ----- */
+const SYNC=[['cVma','pVma'],['cAge','pAge'],['cFcm','pFcm'],['cFcr','pFcr']];
+SYNC.forEach(([a,b])=>{
+  $(a).addEventListener('input',()=>{$(b).value=$(a).value;});
+  $(b).addEventListener('input',()=>{$(a).value=$(b).value;calc();});});
+function syncFill(){SYNC.forEach(([a,b])=>{if(!$(a).value&&$(b).value)$(a).value=$(b).value;else if($(a).value&&!$(b).value)$(b).value=$(a).value;});}
 /* ----- démarrage ----- */
 (async()=>{gSet();if(!SB)return;const{data:{session}}=await SB.auth.getSession();if(session)await startSession(false);})();
 </script>
