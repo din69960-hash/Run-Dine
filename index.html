@@ -86,6 +86,7 @@ th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase}
 .hide{display:none!important}
 .week li{margin-bottom:10px}
 .week{padding-left:20px}
+.wu{font-size:13px;color:var(--muted)}
 ul.lvl li{margin-bottom:6px}ul.lvl li.other{color:var(--muted);font-size:14px}ul.lvl li.me{font-weight:600;background:rgba(255,107,44,.1);border-radius:8px;padding:4px 6px}
 details.wk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--bg2)}
 details.wk summary{cursor:pointer;font-weight:700;list-style:none}
@@ -471,6 +472,9 @@ function calc(){
   const f=filiere(pct,work,mode==='t'&&R<=2*W+1),A=[];
   A.push(['Filière travaillée',`<b>${f[0]}</b> — ${f[1]}`]);
   A.push(['Récupération conseillée',restTxt(lv,work,pct)]);
+  {const ty=f[0].startsWith('Capacité')?null:f[0].startsWith('Seuil')?'mod':f[0].startsWith('Vitesse')?'vit':'int';
+   if(ty){const wu=WU(ty,baseLv,vma,+$('cAge').value||null);A.push(['Échauffement avant la séance',`🔥 ${wu.txt}.<br>🧊 Retour au calme : ${wu.rac}.`]);}
+   else A.push(['Échauffement','Pas d\'échauffement à part : démarre les 10 premières minutes plus lentement.']);}
   A.push(['Ressenti visé (échelle de Borg)',`${RPE[lv]} sur la dernière répétition. Si tu ne tiens plus l'allure, arrête la série : la qualité avant la quantité.`]);
   const vol=[[4,6],[8,12],[15,25],[25,40]][lv];
   if(f[0].startsWith('Puissance'))A.push(['Volume conseillé',`${vol[0]} à ${vol[1]} min d'effort au total à cette intensité pour ton niveau.`]);
@@ -500,7 +504,7 @@ const PRAC={jamais:0,reprise:0,loisir:1,reg2:1,compreg:2,compnat:2,inter:3};
 
 $('analyse').onclick=analyse;
 function analyse(){
-  const age=+$('pAge').value||null,sex=$('pSex').value,prac=$('pPrac').value,soft=$('pSoft').checked,ses=Math.max(1,+$('pSes').value||2);
+  const age=gAgeW=+$('pAge').value||null,sex=$('pSex').value,prac=$('pPrac').value,soft=$('pSoft').checked,ses=Math.max(1,+$('pSes').value||2);
   let vma=+$('pVma').value||null,fcm=+$('pFcm').value||null,fcr=+$('pFcr').value||null;
   const notes=[],out=[];let lvP=PRAC[prac],why=[];
   // chronos
@@ -582,6 +586,16 @@ function analyse(){
 }
 
 /* Séances paramétrées : s = charge (0 → 1), light = semaine allégée */
+/* Échauffement cohérent avec l'intensité de la séance */
+let gAgeW=null;
+function WU(type,lv,vma,age){age=age||gAgeW;const R=Math.round;
+  let m=(type==='int'?[15,20,25,30]:[10,15,20,20])[lv];if(type==='vit')m=[15,20,25,30][lv];if(age&&age>=50)m+=5;
+  let c;
+  if(lv===0)c=`marche active puis course très lente${vma?' ('+pace(vma*.6)+')':''}, mobilité chevilles et hanches, 2 accélérations progressives`;
+  else if(type==='mod')c=`footing progressif${vma?' jusqu\'à '+pace(vma*.7):''} + ${lv>=2?3:2} accélérations sur 80 m`;
+  else c=`footing${vma?' '+pace(vma*.65)+' – '+pace(vma*.6):''}, gammes (montées de genoux, talons-fesses, pas chassés), puis ${lv>=2?4:3} lignes droites en accélérant${type==='vit'?' et 2 départs progressifs':''}`;
+  return{m,txt:`<b>${m}'</b> : ${c}${age&&age>=50?' (+5\' après 50 ans)':''}`,rac:`<b>${lv?10:5}'</b> de footing très lent ou de marche, puis étirements doux`};}
+function wrapWU(html,type,lv,vma){const w=WU(type,lv,vma);return html.replace('<br>',`<br><span class="wu">🔥 Échauffement ${w.txt}</span><br>▶ `)+`<br><span class="wu">🧊 Retour au calme ${w.rac}</span>`;}
 function sessions(lv,vma,objD,tk,s,light){
   const R=Math.round,f=light?.6:1,d=(p,sec)=>R(ms(vma,p)*sec),t=(p,m)=>fmt(m/ms(vma,p));
   const S={
@@ -607,6 +621,10 @@ function sessions(lv,vma,objD,tk,s,light){
    longue:()=>{const base=objD&&objD>=21?[50,75,95,130]:[35,50,70,95];const m=R(base[lv]*(1+.35*s)*(light?.7:1)/5)*5;
      return`<span class="tag">Sortie longue</span><br>${m>=60?Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'):m+' min'} à ${pace(vma*.75)} – ${pace(vma*.65)} (65–75 %)${lv===0?', en alternant course et marche si besoin':''}`;},
    footing:n=>`<span class="tag">Footing${n>1?' × '+n:''}</span><br>${lv===0?'20 à 30 min course/marche':(light?'30 min':'30 à 45 min')} à ${pace(vma*.70)} – ${pace(vma*.60)} (60–70 %)${lv?', finir par 4 lignes droites':''}`};
+  ['court','vmalong','tenir','cotes'].forEach(k=>{const f0=S[k];S[k]=()=>wrapWU(f0(),'int',lv,vma);});
+  {const f0=S.seuil;S.seuil=()=>wrapWU(f0(),'mod',lv,vma);}
+  if(tk){const f0=S.spec;S.spec=()=>wrapWU(f0(),'mod',lv,vma);}
+  {const f0=S.longue;S.longue=()=>f0()+'<br><span class="wu">Pas d\'échauffement à part : fais les 10 premières minutes plus lentement.</span>';}
   return S;}
 
 function buildWeek(lv,vma,ses,obj,objD,tk){
