@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Run Dine</title>
 <meta name="description" content="Calculateur de séances de fractionné à partir de la VMA, avec conseils par niveau — par Kevin Aldon, entraîneur.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Run Dine">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -86,6 +95,17 @@ th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase}
 .hide{display:none!important}
 .week li{margin-bottom:10px}
 .week{padding-left:20px}
+#gate{position:fixed;inset:0;z-index:50;background:#000;overflow-y:auto;display:flex;justify-content:center;align-items:flex-start;padding:16px}
+#gate .gbox{width:100%;max-width:420px;color:#eef1f5}
+#gate .glogo{width:100%;display:block;margin:0 auto 12px}
+#gate label{color:#9aa3b2}#gate input{background:#111;color:#fff;border-color:#333}
+#gate .seg{background:#111;border-color:#333;margin-bottom:10px}#gate .gsub button{font-size:13px;padding:8px}
+#gate .note{color:#9aa3b2}#gate a{color:#c5f02c}
+.gerr{color:#ff5a5f;font-weight:600;min-height:1em}
+#ubar{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted);justify-content:flex-end}
+.lnk{background:none;border:1px solid var(--line);color:var(--txt);border-radius:999px;padding:5px 10px;font:600 12px Inter;cursor:pointer;margin:2px}
+.lnk.red{color:var(--bad);border-color:rgba(255,90,95,.4)}
+#saveState{font-size:12px;color:var(--ok);min-width:90px;text-align:right}
 .brand{background:#000;border-radius:var(--r);margin-bottom:14px;display:flex;justify-content:center;padding:8px}
 .brand img{width:100%;max-width:560px;height:auto;display:block}
 .wu{font-size:13px;color:var(--muted)}
@@ -104,9 +124,28 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
 </style>
 </head>
 <body>
+<div id="gate">
+  <div class="gbox">
+    <img src="logo.jpg" alt="Run Dine" class="glogo">
+    <div class="seg" id="gTabs"><button data-g="run" class="on">🏃 Coureur</button><button data-g="adm">🔑 Administrateur</button></div>
+    <div id="gRun">
+      <div class="seg gsub" id="gMode"><button data-m="in" class="on">Se connecter</button><button data-m="up">Première connexion</button></div>
+      <p class="note" id="gHint">Entre ton nom d'utilisateur et ton mot de passe.</p>
+    </div>
+    <div id="gAdm" class="hide"><p class="note">Accès réservé à l'administrateur.</p></div>
+    <label>Nom d'utilisateur</label><input id="gUser" type="text" autocomplete="username" autocapitalize="none" placeholder="ex. kevin">
+    <label>Mot de passe</label><input id="gPass" type="password" autocomplete="current-password">
+    <div id="gConfWrap" class="hide"><label>Confirme le mot de passe</label><input id="gPass2" type="password" autocomplete="new-password"></div>
+    <button class="btn" id="gGo" style="width:100%">Se connecter</button>
+    <p id="gErr" class="gerr"></p>
+    <p class="note" id="gBoot" style="display:none"><a href="#" id="gBootLink">Première installation : créer le compte administrateur</a></p>
+    <button class="btn ghost hide" id="installBtn" style="width:100%">📲 Installer Run Dine sur mon téléphone</button>
+  </div>
+</div>
 <header>
   <div class="logo">RD</div>
   <div><h1>RUN DINE</h1><small>Le calculateur de séances de Kevin Aldon, entraîneur</small></div>
+  <div id="ubar"></div><span id="saveState"></span>
 </header>
 <nav><div class="in">
   <button data-s="home" class="on">Accueil</button>
@@ -114,6 +153,8 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
   <button data-s="prof">🧭 Mieux vous connaître</button>
   <button data-s="fil">Filières</button>
   <button data-s="test">Côtes & tests</button>
+  <button data-s="admin" id="navAdmin" class="hide">🔑 Admin</button>
+  <button id="installNav" class="hide">📲 Installer</button>
 </div></nav>
 
 <main>
@@ -302,7 +343,7 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
       </div>
     </div>
     <div id="profOut">
-      <div class="card"><h2>Ton profil</h2><p class="muted">Remplis le questionnaire puis clique sur « Analyser mon profil ». Tout se calcule sur ton téléphone : rien n'est enregistré.</p></div>
+      <div class="card"><h2>Ton profil</h2><p class="muted">Remplis le questionnaire puis clique sur « Analyser mon profil ». Tes réponses sont sauvegardées automatiquement sur ton compte.</p></div>
     </div>
   </div>
 </section>
@@ -360,6 +401,17 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
     </div>
   </div>
 </section>
+<!-- ADMIN -->
+<section id="admin">
+  <div class="card">
+    <h2>Suivi des coureurs</h2>
+    <p class="muted">Tu vois les données de chaque coureur, jamais leur mot de passe (il est chiffré). Tu peux en définir un nouveau ou supprimer un compte.</p>
+    <button class="btn ghost" id="admRefresh">🔄 Actualiser</button>
+    <div style="overflow-x:auto;margin-top:12px"><table id="admTable"><thead><tr><th>Coureur</th><th>Niveau</th><th>VMA</th><th>Objectif</th><th>Dernière connexion</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
+    <p id="admMsg" class="note"></p>
+  </div>
+  <div class="card hide" id="admView"></div>
+</section>
 </main>
 
 <footer>
@@ -403,7 +455,7 @@ function fracFor(d,lv){if(FRAC[d])return FRAC[d][lv];const k=[5,10,21.0975,42.19
 /* ---------- Navigation ---------- */
 function show(s){document.querySelectorAll('section').forEach(e=>e.classList.toggle('on',e.id===s));
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));
-  if(s==='fil')renderFil();window.scrollTo({top:0,behavior:'smooth'});}
+  if(s==='fil')renderFil();if(s==='admin')loadAdmin();window.scrollTo({top:0,behavior:'smooth'});}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.s));
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
 
@@ -537,7 +589,7 @@ const objVal=()=>document.querySelector('input[name=obj]:checked').value;
 const PRAC={jamais:0,reprise:0,loisir:1,reg2:1,compreg:2,compnat:2,inter:3};
 
 $('analyse').onclick=analyse;
-function analyse(){
+function analyse(quiet){
   const age=gAgeW=+$('pAge').value||null,sex=$('pSex').value,prac=$('pPrac').value,soft=$('pSoft').checked,ses=Math.max(1,+$('pSes').value||2);
   let vma=+$('pVma').value||null,fcm=+$('pFcm').value||null,fcr=+$('pFcr').value||null;
   const notes=[],out=[];let lvP=PRAC[prac],why=[];
@@ -616,7 +668,8 @@ function analyse(){
   $('profOut').innerHTML=out.join('');
   $('toCalc').onclick=()=>{$('cVma').value=vma;$('cLv').value=lv+1;$('cAge').value=age||'';$('cFcm').value=+$('pFcm').value||'';$('cFcr').value=fcr||'';$('cDefi').checked=false;calc();show('calc');};
   setProf({vma,lv,fcm,fcr,fcEst,tk:targetKmh,objD:obj==='temps'?objD:null,src:'profil'});
-  $('profOut').scrollIntoView({behavior:'smooth'});
+  window.lastResume={niveau:LVN[lv],vma:Math.round(vma*10)/10,objectif:obj==='forme'?'Remise en forme':obj==='tenir'?'Tenir '+dn(objD):(goalT?dn(objD)+' en '+fmt(goalT):dn(objD))};
+  if(!quiet){$('profOut').scrollIntoView({behavior:'smooth'});if(typeof scheduleSave==='function')scheduleSave();}
 }
 
 /* Séances paramétrées : s = charge (0 → 1), light = semaine allégée */
@@ -765,6 +818,113 @@ document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{const k=b.dat
 $('testUse').onclick=()=>{$('cVma').value=testV;$('pVma').value=testV;setVma(testV);calc();show('prof');};
 
 calc();
+
+/* ================= Comptes, sauvegarde Supabase, admin, installation ================= */
+const SB_URL='https://zjzamoprkqicywezzidr.supabase.co',SB_KEY='sb_publishable_ajHuQSjt_84N8_OoMUwAvw__s6tkYkb',DOM='users.rundine.app';
+const SB=window.supabase?window.supabase.createClient(SB_URL,SB_KEY):null;
+let ME=null,gTab='run',gMode='in',saveT=null,loading=false;
+const mail=u=>`${u.trim().toLowerCase()}@${DOM}`;
+const PF=['pAge','pSex','pPrac','pSoft','pSes','pVma','pFcm','pFcr','p10','pSemi','pMara','pObjD','pObjDo','pObjT','pPlan'],CF=['cVma','cLv','cAge','cFcm','cFcr','cDefi'];
+const LAB={pAge:'Âge',pSex:'Sexe',pPrac:'Pratique',pSoft:'Démarrage en douceur',pSes:'Séances / semaine',pVma:'VMA',pFcm:'FC max',pFcr:'FC repos',p10:'Chrono 10 km',pSemi:'Chrono semi',pMara:'Chrono marathon',pObjD:'Distance objectif',pObjDo:'Distance perso',pObjT:'Temps visé',pPlan:'Plan (semaines)',obj:'Objectif',ori:'Priorité'};
+function grab(ids){const o={};ids.forEach(i=>{const e=$(i);if(e)o[i]=e.type==='checkbox'?e.checked:e.value;});return o;}
+function put(o,ids){ids.forEach(i=>{const e=$(i);if(e&&o&&i in o){if(e.type==='checkbox')e.checked=!!o[i];else e.value=o[i];}});}
+async function fnCall(body){const{data,error}=await SB.functions.invoke('rd-auth',{body});
+  if(error){let m=error.message;try{const j=await error.context.json();m=j.error||m;}catch(_){}throw new Error(m);}if(data&&data.error)throw new Error(data.error);return data;}
+
+/* ----- écran de connexion ----- */
+function gSet(){$('gRun').classList.toggle('hide',gTab!=='run');$('gAdm').classList.toggle('hide',gTab!=='adm');
+  const up=gTab==='run'&&gMode==='up';$('gConfWrap').classList.toggle('hide',!up);
+  $('gGo').textContent=up?'Créer mon compte':'Se connecter';$('gBoot').style.display=gTab==='adm'?'block':'none';
+  $('gHint').textContent=up?'Choisis un nom d\'utilisateur (3 à 30 caractères) et un mot de passe (6 minimum). Tu les utiliseras pour retrouver tes données.':'Entre ton nom d\'utilisateur et ton mot de passe.';
+  $('gPass').autocomplete=up?'new-password':'current-password';$('gErr').textContent='';}
+$('gTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{gTab=b.dataset.g;$('gTabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));gSet();});
+$('gMode').querySelectorAll('button').forEach(b=>b.onclick=()=>{gMode=b.dataset.m;$('gMode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));gSet();});
+$('gPass').onkeydown=$('gPass2').onkeydown=e=>{if(e.key==='Enter')$('gGo').click();};
+$('gGo').onclick=async()=>{const u=$('gUser').value.trim(),p=$('gPass').value,err=$('gErr');err.textContent='';
+  if(!SB){err.textContent='Connexion au serveur impossible. Vérifie ta connexion internet.';return;}
+  if(!u||!p){err.textContent='Remplis le nom d\'utilisateur et le mot de passe.';return;}
+  $('gGo').disabled=true;
+  try{
+    if(gTab==='run'&&gMode==='up'){if(p!==$('gPass2').value)throw new Error('Les deux mots de passe ne sont pas identiques.');await fnCall({action:'signup',username:u,password:p});}
+    const{error}=await SB.auth.signInWithPassword({email:mail(u),password:p});
+    if(error)throw new Error('Nom d\'utilisateur ou mot de passe incorrect.');
+    const ok=await startSession(gTab==='adm');if(!ok)throw new Error('Ce compte n\'est pas administrateur.');
+  }catch(e){err.textContent=e.message;}finally{$('gGo').disabled=false;}};
+$('gBootLink').onclick=async e=>{e.preventDefault();const u=$('gUser').value.trim(),p=$('gPass').value;
+  if(!u||!p){$('gErr').textContent='Choisis d\'abord ton nom d\'administrateur et ton mot de passe dans les champs ci-dessus, puis clique à nouveau.';return;}
+  try{await fnCall({action:'bootstrap_admin',username:u,password:p});await SB.auth.signInWithPassword({email:mail(u),password:p});await startSession(true);}
+  catch(x){$('gErr').textContent=x.message;}};
+
+/* ----- session ----- */
+async function startSession(needAdmin){
+  const{data:{user}}=await SB.auth.getUser();if(!user)return false;
+  const{data:prof}=await SB.from('rd_profiles').select('*').eq('id',user.id).maybeSingle();
+  if(!prof){await SB.auth.signOut();return false;}
+  if(needAdmin&&prof.role!=='admin'){await SB.auth.signOut();return false;}
+  ME=prof;SB.rpc('rd_touch');
+  $('gate').style.display='none';
+  $('ubar').innerHTML=`<span>👤 <b>${esc(ME.username)}</b>${ME.role==='admin'?' · admin':''}</span><button class="lnk" id="uPwd">Mot de passe</button><button class="lnk" id="uOut">Déconnexion</button>`;
+  $('uOut').onclick=async()=>{await SB.auth.signOut();location.reload();};
+  $('uPwd').onclick=async()=>{const p=prompt('Nouveau mot de passe (6 caractères minimum) :');if(!p)return;if(p.length<6)return alert('6 caractères minimum.');
+    const{error}=await SB.auth.updateUser({password:p});alert(error?'Erreur : '+error.message:'Mot de passe modifié ✓');};
+  $('navAdmin').classList.toggle('hide',ME.role!=='admin');
+  await loadData();return true;}
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ----- données du coureur ----- */
+async function loadData(){loading=true;
+  const{data}=await SB.from('rd_data').select('*').eq('user_id',ME.id).maybeSingle();
+  if(data){put(data.profil,PF);put(data.calc,CF);
+    if(data.profil&&data.profil.obj){const r=document.querySelector(`input[name=obj][value="${data.profil.obj}"]`);if(r){r.checked=true;r.onchange();}}
+    if(data.profil&&data.profil.ori){const r=document.querySelector(`input[name=ori][value="${data.profil.ori}"]`);if(r)r.checked=true;}
+    $('objOther').classList.toggle('hide',$('pObjD').value!=='autre');
+    calc();if(data.profil&&(data.profil.pVma||data.profil.p10||data.profil.pSemi||data.profil.pMara)){try{analyse(true);}catch(_){}}}
+  loading=false;}
+function collectProfil(){const o=grab(PF);o.obj=objVal();o.ori=document.querySelector('input[name=ori]:checked').value;return o;}
+function scheduleSave(){if(!ME||loading)return;clearTimeout(saveT);saveT=setTimeout(saveNow,1200);}
+async function saveNow(){if(!ME)return;const row={user_id:ME.id,profil:collectProfil(),calc:grab(CF),updated_at:new Date().toISOString()};
+  if(window.lastResume)row.resume=window.lastResume;
+  const{error}=await SB.from('rd_data').upsert(row);$('saveState').textContent=error?'⚠️ non sauvegardé':'✓ sauvegardé';setTimeout(()=>$('saveState').textContent='',2500);}
+['prof','calc'].forEach(id=>{$(id).addEventListener('input',scheduleSave);$(id).addEventListener('change',scheduleSave);$(id).addEventListener('click',e=>{if(e.target.closest('.chip,.seg button,.pbtn'))scheduleSave();});});
+
+/* ----- administration ----- */
+$('admRefresh').onclick=loadAdmin;
+async function loadAdmin(){if(!ME||ME.role!=='admin')return;$('admMsg').textContent='Chargement…';
+  const[{data:P,error:e1},{data:D}]=await Promise.all([SB.from('rd_profiles').select('*').order('created_at'),SB.from('rd_data').select('user_id,profil,resume,updated_at')]);
+  if(e1){$('admMsg').textContent='Erreur : '+e1.message;return;}
+  const byId=Object.fromEntries((D||[]).map(d=>[d.user_id,d]));window._adm={P,byId};
+  const fmtD=x=>x?new Date(x).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'—';
+  $('admTable').querySelector('tbody').innerHTML=P.map(p=>{const r=(byId[p.id]||{}).resume||{};
+    return`<tr><td><b>${esc(p.username)}</b>${p.role==='admin'?' <span class="pill p-fire">admin</span>':''}</td><td>${esc(r.niveau||'—')}</td><td>${r.vma?esc(r.vma)+' km/h':'—'}</td><td>${esc(r.objectif||'—')}</td><td>${fmtD(p.last_seen)}</td>
+    <td style="white-space:nowrap"><button class="lnk" data-v="${p.id}">Voir</button><button class="lnk" data-p="${p.id}">Mot de passe</button>${p.id!==ME.id?`<button class="lnk red" data-d="${p.id}">Supprimer</button>`:''}</td></tr>`;}).join('');
+  $('admMsg').textContent=`${P.length} compte${P.length>1?'s':''}.`;
+  const tb=$('admTable');
+  tb.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>admView(b.dataset.v));
+  tb.querySelectorAll('[data-p]').forEach(b=>b.onclick=async()=>{const u=P.find(x=>x.id===b.dataset.p);const p=prompt(`Nouveau mot de passe pour ${u.username} (6 caractères minimum) :`);if(!p)return;
+    try{await fnCall({action:'set_password',user_id:u.id,password:p});alert(`Mot de passe de ${u.username} modifié ✓ — communique-le lui.`);}catch(x){alert('Erreur : '+x.message);}});
+  tb.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{const u=P.find(x=>x.id===b.dataset.d);if(!confirm(`Supprimer définitivement le compte de ${u.username} et toutes ses données ?`))return;
+    try{await fnCall({action:'delete_user',user_id:u.id});loadAdmin();}catch(x){alert('Erreur : '+x.message);}});}
+function admView(id){const{P,byId}=window._adm,u=P.find(x=>x.id===id),d=byId[id]||{},pr=d.profil||{},r=d.resume||{};
+  const rows=Object.keys(LAB).filter(k=>pr[k]!==undefined&&pr[k]!==''&&pr[k]!==false).map(k=>`<tr><td>${LAB[k]}</td><td>${esc(pr[k]===true?'oui':pr[k])}</td></tr>`).join('');
+  $('admView').classList.remove('hide');
+  $('admView').innerHTML=`<h2>${esc(u.username)}</h2><p class="muted">Compte créé le ${new Date(u.created_at).toLocaleDateString('fr-FR')} · données mises à jour le ${d.updated_at?new Date(d.updated_at).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'—'}</p>
+   ${r.niveau?`<p><b>${esc(r.niveau)}</b> · VMA ${esc(r.vma)} km/h · ${esc(r.objectif||'')}</p>`:''}
+   ${rows?`<table><tbody>${rows}</tbody></table>`:'<p class="muted">Ce coureur n\'a encore rien rempli.</p>'}
+   <button class="btn ghost" onclick="$('admView').classList.add('hide')">Fermer</button>`;
+  $('admView').scrollIntoView({behavior:'smooth'});}
+
+/* ----- installation sur téléphone ----- */
+let deferredPrompt=null;
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('installBtn').classList.remove('hide');$('installNav').classList.remove('hide');});
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent),standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+if(isIOS&&!standalone){$('installBtn').classList.remove('hide');$('installNav').classList.remove('hide');}
+async function doInstall(){if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$('installBtn').classList.add('hide');$('installNav').classList.add('hide');}
+  else alert('Sur iPhone : touche le bouton Partager (carré avec une flèche) en bas de Safari, puis « Sur l\'écran d\'accueil ».\n\nSur Android : menu ⋮ de Chrome, puis « Ajouter à l\'écran d\'accueil » ou « Installer l\'application ».');}
+$('installBtn').onclick=doInstall;$('installNav').onclick=doInstall;
+
+/* ----- démarrage ----- */
+(async()=>{gSet();if(!SB)return;const{data:{session}}=await SB.auth.getSession();if(session)await startSession(false);})();
 </script>
 </body>
 </html>
