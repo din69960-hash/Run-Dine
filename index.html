@@ -467,7 +467,7 @@ function recAdvice(pct,work,lv,intermittent){
    case'endu':return{lo:0,hi:0,comp:'aucune',nat:N1?'1\' de marche si besoin':'aucune',why:'À moins de 76 % de ta VMA, on est en endurance : enchaîne en continu plutôt qu\'en fractionné.'};
    case'seuil':{const lo=cl(r5(work*.2*F),30,N1?180:120),hi=cl(r5(work*.33*F),45,N1?180:120);
      return{lo,hi,comp:'incomplète',nat:N1?'marche puis trot':'trot léger',why:'Au seuil, la récup est courte : tu redescends un peu sans repartir de zéro, pour accumuler du temps juste sous le seuil.'};}
-   case'tenir':{const lo=cl(r5(work*.35*F),30,N1?150:120),hi=cl(r5(work*.6*F),45,N1?150:120);
+   case'tenir':{const lo=cl(r5(work*.35*F),N1?60:30,N1?150:120),hi=cl(r5(work*.6*F),N1?90:45,N1?150:120);
      return{lo,hi,comp:'incomplète',nat:['marche','marche puis trot','trot léger','trot actif (~50 % VMA)'][lv],why:'Juste sous la VMA, on cherche la <b>résistance</b> : récupération plus courte que l\'effort et <b>incomplète</b>. Le cœur reste haut, on cumule du temps près du VO₂max (Billat, Buchheit & Laursen 2013). Plafond 2\', au-delà la séance devient de la puissance.'};}
    case'tenirInt':{const rat=[[1,1],[.5,.75],[.33,.5],[.25,.33]][lv];
      return{lo:Math.max(5,r5(work*rat[0])),hi:Math.max(5,r5(work*rat[1])),comp:'incomplète',nat:lv<2?'trot très lent ou marche':'trot actif',why:'Intermittent sous ta VMA : récup <b>plus courte que l\'effort</b> (type 45/15), active, pour rester longtemps près de ton maximum.'};}
@@ -629,16 +629,17 @@ function WU(type,lv,vma,age){age=age||gAgeW;const R=Math.round;
 function wrapWU(html,type,lv,vma){const w=WU(type,lv,vma);return html.replace('<br>',`<br><span class="wu">🔥 Échauffement ${w.txt}</span><br>▶ `)+`<br><span class="wu">🧊 Retour au calme ${w.rac}</span>`;}
 function sessions(lv,vma,objD,tk,s,light){
   const R=Math.round,f=light?.6:1,d=(p,sec)=>R(ms(vma,p)*sec),t=(p,m)=>fmt(m/ms(vma,p));
+  const rc=(p,sec)=>{const a=recAdvice(p,sec,lv,false);return`${a.lo===a.hi?fmt(a.lo):fmt(a.lo)+' à '+fmt(a.hi)} ${a.nat} (récup ${a.comp})`;};
   const S={
    court:()=>{const c=[[2,6,15,30,95,'marche',3],[2,8,15,15,105,'passive puis trottinée',4],[2,10,30,30,105,'trot léger',4],[3,10,30,30,112,'trot',4]][lv];
      const n=Math.max(4,R((c[1]+c[6]*s)*f)),p=c[4]+R(3*s);
      return`<span class="tag">VMA courte</span><br>${c[0]} × (${n} × ${c[2]}''/${c[3]}'') à ${p} % → <b>${d(p,c[2])} m</b> par effort · récup ${c[5]} · 3' entre séries`;},
    vmalong:()=>{const c=[[4,200,95,"2' marche",3],[5,400,100,"1'30 trot",3],[6,800,98,"2' trot",2],[6,1000,100,"1'30 trot",2]][lv];
      const n=Math.max(3,R((c[0]+c[4]*s)*f));
-     return`<span class="tag">VMA longue</span><br>${n} × ${c[1]} m à ${c[2]} % → <b>${t(c[2],c[1])}</b> chacun · récup ${c[3]}`;},
+     return`<span class="tag">VMA longue</span><br>${n} × ${c[1]} m à ${c[2]} % → <b>${t(c[2],c[1])}</b> chacun · récup ${rc(c[2],c[1]/ms(vma,c[2]))}`;},
    tenir:()=>{const c=[[3,2,90,"2' marche",2],[4,3,95,"1'30 trot",2],[5,3,95,"1'15 trot",2],[5,4,96,"1' trot",2]][lv];
      const n=Math.max(2,R((c[0]+c[4]*s)*f));
-     return`<span class="tag">Tenir la VMA</span><br>${n} × ${c[1]}' à ${c[2]} % → <b>${pace(vma*c[2]/100)}</b> (≈ ${d(c[2],c[1]*60)} m) · récup ${c[3]} · objectif : rester à l'allure jusqu'au bout`;},
+     return`<span class="tag">Tenir la VMA</span><br>${n} × ${c[1]}' à ${c[2]} % → <b>${pace(vma*c[2]/100)}</b> (≈ ${d(c[2],c[1]*60)} m) · récup ${rc(c[2],c[1]*60)} · objectif : rester à l'allure jusqu'au bout`;},
    seuil:()=>{const c=[[3,4,80,"2'",2],[3,6,85,"2'",4],[3,10,87,"2'",5],[2,15,88,"3'",5]][lv];
      const dur=R((c[1]+c[4]*s)*(light?.7:1));
      return`<span class="tag">Seuil</span><br>${c[0]} × ${dur}' à ${c[2]} % → <b>${pace(vma*c[2]/100)}</b> · récup ${c[3]} trot`;},
