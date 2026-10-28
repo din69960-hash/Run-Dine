@@ -504,42 +504,59 @@ function curZone(){const vma=+$('cVma').value||15,lv=curLv();
   if(mode==='t')return interp(INT,W,lv);return interp(DIST,D,lv);}
 /* ---------- Filière + récupération : selon % VMA ET durée d'effort ----------
    key : endu | seuil | tenir | puiss | puissInt | tenirInt | lact | vit */
-function classify(pct,work,intermittent){
+/* Zone de puissance aérobie (VO₂max) selon la DURÉE d'effort — Billat, Buchheit & Laursen 2013 */
+function paBand(work,intermittent,lv){if(lv==null)lv=2;const sh=(a,d)=>[a[0]+d,a[1]+d];
+  if(intermittent){if(work<=20)return sh([110,120],[-10,-10,-5,0][lv]);if(work<=40)return sh([100,110],[-5,-5,0,0][lv]);return[95,105];}
+  if(work<=45)return sh([105,115],[-10,-5,0,0][lv]);        // répétitions très courtes isolées (≤ 200 m)
+  if(work<=150)return[100,105];       // fractionné moyen (1' à 2'30, 300–600 m)
+  if(work<=360)return[92,100];        // fractionné long (2'30 à 6', 800–1500 m)
+  return[88,95];}                      // très long (> 6')
+function bandLabel(work,intermittent){
+  if(intermittent)return work<=20?'un intermittent très court (10/10, 15/15)':work<=40?'un intermittent court (30/30)':'un intermittent long (45/15, 1\'/1\')';
+  return work<=45?'une répétition très courte':work<=150?'un fractionné moyen (1\' à 2\'30)':work<=360?'un fractionné long (2\'30 à 6\')':'une répétition très longue (> 6\')';}
+function classify(pct,work,intermittent,lv){
+  const[lo,hi]=paBand(work,intermittent,lv),seuilTop=Math.max(85,Math.min(90,lo-6));
   if(pct<76)return'endu';
-  if(pct<90)return'seuil';
-  if(work<=10&&pct>=110)return'vit';
-  if(intermittent&&work<=60)return pct>=100?'puissInt':'tenirInt';
-  if(pct<100)return'tenir';
-  if(pct>=110&&work>10&&work<=90)return'lact';
-  return'puiss';}
+  if(pct<seuilTop)return'seuil';
+  if(pct<lo)return intermittent&&work<=60?'tenirInt':'tenir';
+  if(pct<=hi)return intermittent&&work<=60?'puissInt':'puiss';
+  if(work<=10)return'vit';
+  if(work<=90)return'lact';
+  return'trop';}
 const FIL={
   endu:['Capacité aérobie (endurance fondamentale)','Construire le moteur : capillaires, mitochondries, utilisation des graisses. À cette allure, on court en continu.'],
   seuil:['Seuil / endurance active','Repousser le moment où l\'acide lactique s\'accumule : tenir vite plus longtemps.'],
-  tenir:['Tenir la VMA (endurance de VMA)','Juste sous ta VMA : on cherche à durer à haute allure. La récupération est volontairement <b>incomplète</b> pour cumuler du temps près de ton maximum.'],
+  tenir:['Tenir la VMA (endurance de VMA)','Juste sous la zone de puissance pour un effort de cette durée : on cherche à durer à haute allure. La récupération est volontairement <b>incomplète</b> pour cumuler du temps près de ton maximum.'],
+  trop:['Au-dessus de ta zone de puissance','Pour un effort aussi long, cette intensité dépasse ce que l\'on peut tenir : à 100 % de VMA, on tient en moyenne 4 à 7 minutes (temps limite, Billat). Tu risques de ne pas finir la répétition à l\'allure.'],
   tenirInt:['Tenir la VMA — intermittent','Intermittent sous ta VMA avec récupération courte (type 45/15) : on enchaîne pour rester longtemps près de ta consommation maximale d\'oxygène.'],
-  puiss:['Puissance aérobie (VMA)','À ta VMA ou au-dessus : on travaille la <b>qualité</b> et la vitesse. La récupération doit permettre de garder la même allure à chaque répétition.'],
-  puissInt:['Puissance aérobie — intermittent court','Au-dessus de ta VMA mais sur des efforts très courts : c\'est l\'enchaînement effort/récup qui maintient le cœur et les poumons au maximum (principe du 30/30 de Billat).'],
+  puiss:['Puissance aérobie (VMA)','Dans la zone qui développe le VO₂max pour un effort de cette durée : on travaille la <b>qualité</b>. La récupération doit permettre de garder la même allure à chaque répétition.'],
+  puissInt:['Puissance aérobie — intermittent','Dans la zone de puissance pour ce format : c\'est l\'enchaînement effort/récup qui maintient le cœur et les poumons au maximum (principe du 30/30 de Billat).'],
   lact:['Puissance / résistance lactique','Très au-dessus de ta VMA sur 10 à 90 secondes : effort très dur, qui produit beaucoup d\'acide lactique.'],
   vit:['Vitesse / anaérobie alactique','Explosivité et vitesse pure sur moins de 10 secondes : on utilise les réserves immédiates du muscle (phosphocréatine).']};
-function filiere(pct,sec,intermittent){return FIL[classify(pct,sec,intermittent)];}
+function filiere(pct,sec,intermittent,lv){const k=classify(pct,sec,intermittent,lv),b=paBand(sec,intermittent,lv),f=FIL[k];
+  return[f[0],f[1]+`<br><span class="muted" style="font-size:13px">📐 Pour ${bandLabel(sec,intermittent)} (${fmt(sec)}), la zone de puissance aérobie est <b>${b[0]}–${b[1]} %</b> de VMA${lv!=null&&lv<2?' (adaptée à ton niveau)':''}. Tu es à <b>${Math.round(pct)} %</b> : ${k==='puiss'||k==='puissInt'?'dans la zone ✓':pct<b[0]?'en dessous':'au-dessus'}.</span>`,k];}
 
 /* Retourne {lo,hi (s), comp:'complète'|'incomplète'|'aucune', nat, why} */
-function recAdvice(pct,work,lv,intermittent){
-  const k=classify(pct,work,intermittent),F=[1.5,1.2,1,.8][lv],N1=lv===0,cl=(x,a,b)=>Math.max(a,Math.min(b,x)),r5=x=>Math.round(x/5)*5;
+function recAdvice(pct,work,lv,intermittent,kForce){
+  const k=kForce||classify(pct,work,intermittent,lv),F=[1.5,1.2,1,.8][lv],N1=lv===0,cl=(x,a,b)=>Math.max(a,Math.min(b,x)),r5=x=>Math.round(x/5)*5;
   const capP=N1?240:180;
   switch(k){
    case'endu':return{lo:0,hi:0,comp:'aucune',nat:N1?'1\' de marche si besoin':'aucune',why:'À moins de 76 % de ta VMA, on est en endurance : enchaîne en continu plutôt qu\'en fractionné.'};
    case'seuil':{const lo=cl(r5(work*.2*F),30,N1?180:120),hi=cl(r5(work*.33*F),45,N1?180:120);
      return{lo,hi,comp:'incomplète',nat:N1?'marche puis trot':'trot léger',why:'Au seuil, la récup est courte : tu redescends un peu sans repartir de zéro, pour accumuler du temps juste sous le seuil.'};}
    case'tenir':{const lo=cl(r5(work*.35*F),N1?60:30,N1?150:120),hi=cl(r5(work*.6*F),N1?90:45,N1?150:120);
-     return{lo,hi,comp:'incomplète',nat:['marche','marche puis trot','trot léger','trot actif (~50 % VMA)'][lv],why:'Juste sous la VMA, on cherche la <b>résistance</b> : récupération plus courte que l\'effort et <b>incomplète</b>. Le cœur reste haut, on cumule du temps près du VO₂max (Billat, Buchheit & Laursen 2013). Plafond 2\', au-delà la séance devient de la puissance.'};}
+     return{lo,hi,comp:'incomplète',nat:['marche','marche puis trot','trot léger','trot actif (~50 % VMA)'][lv],why:'Juste sous la zone de puissance, on cherche la <b>résistance</b> : récupération plus courte que l\'effort et <b>incomplète</b>. Le cœur reste haut, on cumule du temps près du VO₂max (Billat, Buchheit & Laursen 2013). Plafond 2\', au-delà la séance devient de la puissance.'};}
    case'tenirInt':{const rat=[[1,1],[.5,.75],[.33,.5],[.25,.33]][lv];
      return{lo:Math.max(5,r5(work*rat[0])),hi:Math.max(5,r5(work*rat[1])),comp:'incomplète',nat:lv<2?'trot très lent ou marche':'trot actif',why:'Intermittent sous ta VMA : récup <b>plus courte que l\'effort</b> (type 45/15), active, pour rester longtemps près de ton maximum.'};}
-   case'puissInt':{const rat=[[2,3],[1,1.5],[1,1],[.5,1]][lv];
-     return{lo:r5(work*rat[0]),hi:r5(work*rat[1]),comp:'incomplète (voulue)',nat:pct>110?'passive (debout ou marche)':(lv<2?'passive puis trottinée':'trot léger'),why:'Exception à la règle : même au-dessus de la VMA, en intermittent court la récup reste courte, c\'est l\'enchaînement qui fait monter la consommation d\'O₂. Au-dessus de 110 %, la récup <b>passive</b> permet de tenir plus longtemps (Dupont et al. 2004).'};}
-   case'puiss':{if(work>240)return{lo:150,hi:capP,comp:'quasi complète',nat:lv<2?'marche puis trot':'trot léger',why:`Effort long (${fmt(work)}) à ta VMA ou au-dessus : on vise la qualité, mais inutile d'aller au-delà de ${N1?'4':'3'}' : en 3 min, les réserves d'énergie rapide (phosphocréatine) sont presque entièrement rechargées.`};
-     const lo=cl(r5(work*1*F),60,capP),hi=cl(r5(work*1.5*F),90,capP);
-     return{lo,hi,comp:'large',nat:lv<2?'marche':'marche ou trot très lent',why:'À ta VMA ou au-dessus, on travaille la <b>puissance</b> : récup au moins égale à l\'effort (1 à 1,5 fois), pour garder la même vitesse sur chaque répétition. Plafond 3\' : au-delà, les réserves sont rechargées et on perd l\'effet d\'entraînement.'};}
+   case'puissInt':{const rat=work>40?[[.75,1],[.5,.75],[.33,.5],[.25,.33]][lv]:[[2,3],[1,1.5],[1,1],[.5,1]][lv];
+     return{lo:r5(work*rat[0]),hi:r5(work*rat[1]),comp:'incomplète (voulue)',nat:pct>110?'passive (debout ou marche)':(lv<2?'passive puis trottinée':'trot léger'),why:'En intermittent, la récup reste courte même au-dessus de la VMA : c\'est l\'enchaînement qui fait monter la consommation d\'O₂. Au-dessus de 110 %, la récup <b>passive</b> permet de tenir plus longtemps (Dupont et al. 2004).'};}
+   case'puiss':{
+     if(work>240)return{lo:120,hi:capP,comp:'large',nat:lv<2?'marche puis trot':'trot léger',why:`Fractionné long (${fmt(work)}) en puissance aérobie : récup de 2 à 3', active de préférence pour que le VO₂ remonte vite à la répétition suivante. Inutile d'aller au-delà de ${N1?'4':'3'}' : en 3 min, les réserves d'énergie rapide (phosphocréatine) sont presque rechargées.`};
+     if(work>45){const lo=cl(r5(work*.75*F),60,capP),hi=cl(r5(work*1*F),75,capP);
+       return{lo,hi,comp:'large',nat:lv<2?'marche puis trot':'trot léger',why:'Fractionné en puissance aérobie : récup proche de la durée de l\'effort (0,75 à 1 fois), pour garder la même vitesse à chaque répétition tout en gardant le cœur assez haut. Plafond 3\'.'};}
+     const lo=cl(r5(work*1.5*F),45,capP),hi=cl(r5(work*2.5*F),60,capP);
+     return{lo,hi,comp:'large',nat:'marche ou trot très lent',why:'Répétitions très courtes au-dessus de ta VMA : récup de 1,5 à 2,5 fois l\'effort, pour garder la qualité. Plafond 3\'.'};}
+   case'trop':return{lo:150,hi:capP,comp:'complète',nat:'marche puis trot',why:'Si tu gardes cette intensité, récupère au maximum (2\'30 à 3\') et prévois peu de répétitions. Mieux : baisse l\'allure dans la zone de puissance indiquée ci-dessus.'};
    case'lact':return{lo:N1?180:150,hi:N1?300:240,comp:'complète',nat:'marche',why:'Travail lactique en <b>puissance</b> : récup longue et complète (3 à 5 fois l\'effort) pour garder la vitesse. Pour travailler la <b>résistance</b> lactique, raccourcis la récup entre répétitions (1 à 2 fois l\'effort) et allonge-la entre les séries.'};
    case'vit':return{lo:90,hi:180,comp:'complète',nat:'passive : marche',why:'Vitesse pure : récup <b>complète</b> (1\'30 à 3\'), sinon les réserves de phosphocréatine ne se reconstituent pas et tu ne travailles plus la vitesse (la moitié se recharge en 30 s, la quasi-totalité en 3 min).'};}}
 
@@ -566,7 +583,7 @@ function calc(){
   const unit=mode==='t'?`${W}''/${R}''`:`${D} m`;
   $('rTot').innerHTML=`<b>${ser} série${ser>1?'s':''} de ${rep} × ${unit}</b> = <b>${rep*ser} efforts</b> au total${ser>1?`, avec ${rs}' de pause entre chaque série`:''}.<br>Volume intense <b>${totD>=1000?(Math.round(totD/100)/10).toString().replace('.',',')+' km':Math.round(totD)+' m'}</b> (${fmt(work*rep*ser)} d'effort) · durée du bloc ≈ <b>${fmt(totT)}</b>`;
   // conseils
-  const f=filiere(pct,work,mode==='t'&&work<=60),A=[];
+  const f=filiere(pct,work,mode==='t'&&work<=60,lv),A=[];
   A.push(['Filière travaillée',`<b>${f[0]}</b> — ${f[1]}`]);
   A.push(['Récupération conseillée',restTxt(lv,work,pct)]);
   {const ty=f[0].startsWith('Capacité')?null:f[0].startsWith('Seuil')?'mod':f[0].startsWith('Vitesse')?'vit':'int';
@@ -574,7 +591,7 @@ function calc(){
    else A.push(['Échauffement','Pas d\'échauffement à part : démarre les 10 premières minutes plus lentement.']);}
   A.push(['Ressenti visé (échelle de Borg)',`${RPE[lv]} sur la dernière répétition. Si tu ne tiens plus l'allure, arrête la série : la qualité avant la quantité.`]);
   const vol=[[4,6],[8,12],[15,25],[25,40]][lv];
-  if(/^(Puissance aérobie|Tenir)/.test(f[0]))A.push(['Volume conseillé',`${vol[0]} à ${vol[1]} min d'effort au total à cette intensité pour ton niveau.`]);
+  if(['puiss','puissInt','tenir','tenirInt'].includes(f[2]))A.push(['Volume conseillé',`${vol[0]} à ${vol[1]} min d'effort au total à cette intensité pour ton niveau.`]);
     const fcT=fcTarget(pct,work);$('rFc').textContent=fcT[1];
   A.splice(1,0,['Fréquence cardiaque visée',fcT[0]]);
   if(baseLv===0)A.push(['Message du coach','Tu démarres : vise la réussite de chaque répétition. Sur herbe ou sur piste plutôt que sur bitume. On raccourcira la récupération dans 4 à 6 semaines.']);
@@ -694,7 +711,7 @@ function WU(type,lv,vma,age){age=age||gAgeW;const R=Math.round;
 function wrapWU(html,type,lv,vma){const w=WU(type,lv,vma);return html.replace('<br>',`<br><span class="wu">🔥 Échauffement ${w.txt}</span><br>▶ `)+`<br><span class="wu">🧊 Retour au calme ${w.rac}</span>`;}
 function sessions(lv,vma,objD,tk,s,light){
   const R=Math.round,f=light?.6:1,d=(p,sec)=>R(ms(vma,p)*sec),t=(p,m)=>fmt(m/ms(vma,p));
-  const rc=(p,sec)=>{const a=recAdvice(p,sec,lv,false);return`${a.lo===a.hi?fmt(a.lo):fmt(a.lo)+' à '+fmt(a.hi)} ${a.nat} (récup ${a.comp})`;};
+  const rc=(p,sec,kf)=>{const a=recAdvice(p,sec,lv,false,kf);return`${a.lo===a.hi?fmt(a.lo):fmt(a.lo)+' à '+fmt(a.hi)} ${a.nat} (récup ${a.comp})`;};
   const S={
    court:()=>{const c=[[2,6,15,30,95,'marche',3],[2,8,15,15,105,'passive puis trottinée',4],[2,10,30,30,105,'trot léger',4],[3,10,30,30,112,'trot',4]][lv];
      const n=Math.max(4,R((c[1]+c[6]*s)*f)),p=c[4]+R(3*s);
@@ -704,7 +721,7 @@ function sessions(lv,vma,objD,tk,s,light){
      return`<span class="tag">VMA longue</span><br>${n} × ${c[1]} m à ${c[2]} % → <b>${t(c[2],c[1])}</b> chacun · récup ${rc(c[2],c[1]/ms(vma,c[2]))}`;},
    tenir:()=>{const c=[[3,2,90,"2' marche",2],[4,3,95,"1'30 trot",2],[5,3,95,"1'15 trot",2],[5,4,96,"1' trot",2]][lv];
      const n=Math.max(2,R((c[0]+c[4]*s)*f));
-     return`<span class="tag">Tenir la VMA</span><br>${n} × ${c[1]}' à ${c[2]} % → <b>${pace(vma*c[2]/100)}</b> (≈ ${d(c[2],c[1]*60)} m) · récup ${rc(c[2],c[1]*60)} · objectif : rester à l'allure jusqu'au bout`;},
+     return`<span class="tag">Tenir la VMA</span><br>${n} × ${c[1]}' à ${c[2]} % → <b>${pace(vma*c[2]/100)}</b> (≈ ${d(c[2],c[1]*60)} m) · récup ${rc(c[2],c[1]*60,'tenir')} · objectif : rester à l'allure jusqu'au bout`;},
    seuil:()=>{const c=[[3,4,80,"2'",2],[3,6,85,"2'",4],[3,10,87,"2'",5],[2,15,88,"3'",5]][lv];
      const dur=R((c[1]+c[4]*s)*(light?.7:1));
      return`<span class="tag">Seuil</span><br>${c[0]} × ${dur}' à ${c[2]} % → <b>${pace(vma*c[2]/100)}</b> · récup ${c[3]} trot`;},
@@ -803,7 +820,7 @@ function renderFil(){
     ['N1 : 20–30 min en alternant course et marche','N2 : footing 40–50 min','N3 : sortie longue 1h–1h30','N4 : 1h30–2h, volume hebdo élevé'],fc(65,75),'Aisance respiratoire : tu peux parler. Ressenti 3–4/10.',true],
    ['Seuil / endurance active','80–90 %',al(80,90),'Repousser le seuil où l\'acide lactique s\'accumule : tenir une allure élevée plus longtemps. Clé du 10 km au marathon.',
     [`N1 : 3 × 4' à 80 %${Pa(80)}, récup 2'`,`N2 : 3 × 6' à 85 %${Pa(85)}, récup 2'`,`N3 : 3 × 10' à 87 %${Pa(87)}, récup 2'`,`N4 : 2 × 15' ou 40' continu à 88 %${Pa(88)}`],fc(80,90),'« Confortablement difficile » : phrases courtes. Ressenti 6–7/10.',true],
-   ['Puissance aérobie (VMA)','95–110 % (jusqu\'à 130 % en intermittent très court)',al(95,105),'Relever le plafond : VO₂max. Intermittent court (10/10, 15/15, 30/30, 45/15) ou fractionné long (400 m à 1000 m). À 100 % de VMA, on tient 4 à 7 min (Billat).',
+   ['Puissance aérobie (VMA)','92–120 % selon la durée d\'effort',al(95,105),'Relever le plafond : VO₂max. Le bon % dépend de la durée : <b>110–120 %</b> en 10/10 ou 15/15, <b>100–110 %</b> en 30/30, <b>100–105 %</b> sur 1\' à 2\'30 (300–600 m), <b>92–100 %</b> sur 2\'30 à 6\' (800–1500 m). À 100 % de VMA, on tient 4 à 7 min (Billat) ; l\'objectif est de cumuler environ 10 min près du VO₂max par séance (Buchheit & Laursen).',
     [`N1 : 2 × (6 × 15''/30'' marche) à 95 %${Dm(95,15)} · ou 4 × 200 m à 95 %${T(95,200)}`,`N2 : 2 × (8 × 15/15) à 105 %${Dm(105,15)} · ou 5 × 400 m à 100 %${T(100,400)}`,`N3 : 2 × (10 × 30/30) à 105 %${Dm(105,30)} · ou 6 × 800 m à 98 %${T(98,800)}`,`N4 : 3 × (10 × 30/30) à 112 %${Dm(112,30)} · ou 6 × 1000 m à 100 %${T(100,1000)}`],
     fc(92,100,'sur le fractionné long ; en intermittent court, le cœur n\'a pas le temps d\'y monter'),'Tu ne peux plus parler. Ressenti 8–9/10.',true],
    ['Tenir la VMA','90–96 %',al(90,96),'Rester longtemps près de ta VMA : répétitions de 2 à 4 min avec récupération courte. C\'est ce qui fait la différence sur 5 et 10 km, et ce qui progresse encore après 35–40 ans.',
