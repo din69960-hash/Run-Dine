@@ -19,24 +19,24 @@
 <style>
 :root{
   --bg:#0f1115;--bg2:#171a21;--card:#1d212a;--line:#2b303b;--txt:#eef1f5;--muted:#9aa3b2;
-  --acc:#ff6b2c;--acc2:#ffb347;--ok:#2ecc71;--warn:#f5b041;--bad:#ff5a5f;--blue:#4aa3ff;
+  --acc:#c5f02c;--acc2:#9fd400;--acct:#c5f02c;--onacc:#0b0d10;--ok:#2ecc71;--warn:#f5b041;--bad:#ff5a5f;--blue:#4aa3ff;
   --r:16px;
 }
 @media (prefers-color-scheme: light){
-  :root{--bg:#f4f5f8;--bg2:#ffffff;--card:#ffffff;--line:#e2e5ec;--txt:#161a22;--muted:#5d6676;}
+  :root{--bg:#f4f5f8;--bg2:#ffffff;--card:#ffffff;--line:#e2e5ec;--txt:#161a22;--muted:#5d6676;--acct:#5a7800;}
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:1.45}
 h1,h2,h3,.big{font-family:"Barlow Condensed",Inter,sans-serif;letter-spacing:.3px}
-a{color:var(--acc)}
+a{color:var(--acct)}
 header{padding:18px 16px 8px;max-width:980px;margin:0 auto;display:flex;align-items:center;gap:12px}
-.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;font-weight:800;color:#fff;font-family:"Barlow Condensed";font-size:22px}
+.logo{width:42px;height:42px;border-radius:12px;background:#000 url(icon-192.png) center/cover;flex:0 0 42px}
 header h1{margin:0;font-size:28px;line-height:1}
 header small{color:var(--muted);display:block;font-size:13px}
 nav{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
 nav .in{max-width:980px;margin:0 auto;display:flex;gap:6px;overflow-x:auto;padding:8px 16px}
 nav button{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--muted);padding:8px 14px;border-radius:999px;font:600 14px Inter;cursor:pointer}
-nav button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+nav button.on{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
 main{max-width:980px;margin:0 auto;padding:16px}
 section{display:none}section.on{display:block}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
@@ -58,16 +58,16 @@ input[type=number],input[type=text],select{width:100%;background:var(--bg2);colo
 .row3{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
 .seg{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
 .seg button{flex:1;border:0;background:transparent;color:var(--muted);padding:10px;border-radius:9px;font:600 14px Inter;cursor:pointer}
-.seg button.on{background:var(--acc);color:#fff}
+.seg button.on{background:var(--acc);color:var(--onacc)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{border:1px solid var(--line);background:var(--bg2);color:var(--txt);padding:8px 12px;border-radius:999px;font:600 14px Inter;cursor:pointer}
-.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.chip.on{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
 .slider{display:flex;align-items:center;gap:10px}
 .slider input[type=range]{flex:1;accent-color:var(--acc);height:30px}
 .pbtn{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--txt);font:700 20px Inter;cursor:pointer}
 .pval{font:800 34px "Barlow Condensed";min-width:86px;text-align:center}
-.result{text-align:center;padding:20px 12px;border-radius:var(--r);background:linear-gradient(135deg,rgba(255,107,44,.16),rgba(255,179,71,.08));border:1px solid rgba(255,107,44,.4)}
-.result .big{font-size:64px;font-weight:800;line-height:1;color:var(--acc)}
+.result{text-align:center;padding:20px 12px;border-radius:var(--r);background:linear-gradient(135deg,rgba(197,240,44,.16),rgba(159,212,0,.08));border:1px solid rgba(197,240,44,.4)}
+.result .big{font-size:64px;font-weight:800;line-height:1;color:var(--acct)}
 .result .lab{color:var(--muted);font-size:14px}
 .result .sub{margin-top:8px;font-weight:600}
 .pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:700}
@@ -75,14 +75,14 @@ input[type=number],input[type=text],select{width:100%;background:var(--bg2);colo
 .p-warn{background:rgba(245,176,65,.15);color:var(--warn)}
 .p-bad{background:rgba(255,90,95,.15);color:var(--bad)}
 .p-info{background:rgba(74,163,255,.15);color:var(--blue)}
-.p-fire{background:rgba(255,107,44,.18);color:var(--acc)}
+.p-fire{background:rgba(197,240,44,.18);color:var(--acct)}
 .zonebar{position:relative;height:10px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);margin:10px 0 4px}
 .zonebar .z{position:absolute;top:0;bottom:0;background:rgba(46,204,113,.45);border-radius:6px}
 .zonebar .k{position:absolute;top:-5px;width:4px;height:18px;background:var(--acc);border-radius:2px}
 .adv{display:grid;gap:8px}
 .adv div{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .adv .h{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
-.btn{display:inline-block;border:0;background:var(--acc);color:#fff;padding:12px 18px;border-radius:12px;font:700 15px Inter;cursor:pointer;margin-top:12px}
+.btn{display:inline-block;border:0;background:var(--acc);color:var(--onacc);padding:12px 18px;border-radius:12px;font:700 15px Inter;cursor:pointer;margin-top:12px}
 .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
@@ -112,17 +112,54 @@ th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase}
 .brand{background:#000;border-radius:var(--r);margin-bottom:14px;display:flex;justify-content:center;padding:8px}
 .brand img{width:100%;max-width:560px;height:auto;display:block}
 .wu{font-size:13px;color:var(--muted)}
-ul.lvl li{margin-bottom:6px}ul.lvl li.other{color:var(--muted);font-size:14px}ul.lvl li.me{font-weight:600;background:rgba(255,107,44,.1);border-radius:8px;padding:4px 6px}
+ul.lvl li{margin-bottom:6px}ul.lvl li.other{color:var(--muted);font-size:14px}ul.lvl li.me{font-weight:600;background:rgba(197,240,44,.1);border-radius:8px;padding:4px 6px}
 details.wk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--bg2)}
 details.wk summary{cursor:pointer;font-weight:700;list-style:none}
-details.wk summary::before{content:"▸ ";color:var(--acc)}details.wk[open] summary::before{content:"▾ "}
-details.wk .wn{font-family:"Barlow Condensed";font-size:19px;color:var(--acc)}
+details.wk summary::before{content:"▸ ";color:var(--acct)}details.wk[open] summary::before{content:"▾ "}
+details.wk .wn{font-family:"Barlow Condensed";font-size:19px;color:var(--acct)}
 details.wk ol{margin:10px 0 0}
 @media print{details.wk{break-inside:avoid}}
-.tag{font-size:12px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.5px}
+.tag{font-size:12px;font-weight:700;color:var(--acct);text-transform:uppercase;letter-spacing:.5px}
 .fil{border-left:5px solid var(--acc)}
 footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);font-size:13px}
 .note{font-size:13px;color:var(--muted);margin-top:8px}
+.kick{font:700 12px Inter;letter-spacing:.18em;color:var(--acct);text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.kick::before{content:"";width:26px;height:2px;background:var(--acc)}
+.hx{display:grid;gap:18px;grid-template-columns:1fr;align-items:center;background:#0b0d10;color:#eef1f5;border-radius:var(--r);padding:26px 22px;margin-bottom:14px;border:1px solid #23272f;background-image:radial-gradient(600px 300px at 100% 0,rgba(197,240,44,.10),transparent 70%)}
+@media(min-width:760px){.hx{grid-template-columns:1.1fr .9fr;padding:34px 30px}}
+.hx .kick{color:#c5f02c}
+.hx-t{font:800 46px/0.98 "Barlow Condensed",Inter,sans-serif;margin:12px 0 14px;text-transform:uppercase;letter-spacing:.5px}
+@media(min-width:760px){.hx-t{font-size:62px}}
+.hx-t em,.hx2 em{font-style:normal;color:#c5f02c}
+.hx p{color:#aeb6c4;margin:0 0 18px;max-width:46ch}
+.hx-b{display:flex;gap:10px;flex-wrap:wrap}
+.hbtn{border:0;border-radius:999px;padding:12px 20px;font:800 14px Inter;letter-spacing:.06em;text-transform:uppercase;background:#c5f02c;color:#0b0d10;cursor:pointer}
+.hbtn.ghost{background:transparent;color:#fff;border:1.5px solid #3a404c}
+.hx-r{background:#000;border:1px solid #23272f;border-radius:18px;padding:10px;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+.hx-r img{width:100%;display:block;border-radius:12px}
+.steps{display:grid;grid-template-columns:1fr;background:#0b0d10;border:1px solid #23272f;border-radius:var(--r);margin-bottom:22px;overflow:hidden}
+@media(min-width:760px){.steps{grid-template-columns:repeat(3,1fr)}}
+.steps div{padding:16px 20px;border-top:1px solid #23272f}
+@media(min-width:760px){.steps div{border-top:0;border-left:1px solid #23272f}.steps div:first-child{border-left:0}}
+.steps div:first-child{border-top:0}
+.steps b{display:block;font:800 22px "Barlow Condensed",Inter,sans-serif;color:#c5f02c;letter-spacing:.5px;text-transform:uppercase}
+.steps span{font:600 11px Inter;letter-spacing:.14em;text-transform:uppercase;color:#8a93a3}
+.hx2{display:grid;gap:10px;grid-template-columns:1fr;align-items:end;margin:10px 0 16px}
+@media(min-width:760px){.hx2{grid-template-columns:1fr 1fr}}
+.hx2 h2{font:800 38px/1 "Barlow Condensed",Inter,sans-serif;margin:8px 0 0;text-transform:uppercase}
+.hx2 em{color:var(--acct)}
+.hx2 p{margin:0;color:var(--muted)}
+.feat{display:grid;gap:14px;grid-template-columns:1fr;margin-bottom:14px}
+@media(min-width:760px){.feat{grid-template-columns:repeat(3,1fr)}}
+.fcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 18px;cursor:pointer;transition:transform .15s,border-color .15s;display:flex;flex-direction:column}
+.fcard:hover{transform:translateY(-2px);border-color:var(--acc)}
+.fcard .n{font:700 11px Inter;letter-spacing:.16em;color:var(--acct);text-transform:uppercase}
+.fcard h3{font:800 28px/1.02 "Barlow Condensed",Inter,sans-serif;margin:10px 0 8px;text-transform:uppercase}
+.fcard p{color:var(--muted);font-size:14px;margin:0 0 14px;flex:1}
+.fcard .go{font:800 12px Inter;letter-spacing:.1em;color:var(--acct);text-transform:uppercase}
+.recap{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.recap b{color:var(--acct)}
+.sub2{margin:-4px 0 12px;color:var(--muted)}
 @media print{nav,header,footer,.noprint{display:none!important}section{display:none!important}section.on{display:block!important}body{background:#fff;color:#000}.card{border:1px solid #ccc}}
 </style>
 </head>
@@ -152,14 +189,15 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
   </div>
 </div>
 <header>
-  <div class="logo">RD</div>
+  <div class="logo" aria-hidden="true"></div>
   <div><h1>RUN DINE</h1><small>Le calculateur de séances de Kevin Aldon, entraîneur</small></div>
   <div id="ubar"></div><span id="saveState"></span>
 </header>
 <nav><div class="in">
   <button data-s="home" class="on">Accueil</button>
-  <button data-s="calc">⚡ Calcul direct</button>
-  <button data-s="prof">🧭 Mieux vous connaître</button>
+  <button data-s="eval">🧭 Évaluation</button>
+  <button data-s="calc">⚡ Calculer vos fractionnés</button>
+  <button data-s="prof">🗓️ Programmation</button>
   <button data-s="fil">Filières</button>
   <button data-s="test">Côtes & tests</button>
   <button data-s="admin" id="navAdmin" class="hide">🔑 Admin</button>
@@ -169,31 +207,92 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
 <main>
 <!-- ACCUEIL -->
 <section id="home" class="on">
-  <div class="brand"><img src="logo.jpg" alt="Run Dine — Gymnastique, Strength, Flexibility, Power"></div>
-  <div class="card">
-    <h2>Courir, c'est aussi aller chercher ses limites.</h2>
-    <p>Ici, même le débutant fait du fractionné et des côtes. Pas pour se faire mal : pour <b>ressentir l'effort, se dépasser et réussir</b>. Tout est dosé selon ton niveau, à partir de ta VMA et des connaissances scientifiques sur l'entraînement.</p>
-    <div class="quote">« La qualité du travail dépend de la connaissance de tes limites. Je t'oriente, à toi d'écouter tes sensations. »</div>
-  </div>
-  <div class="hero">
-    <div class="card entry" data-go="calc">
-      <div class="ico">⚡</div>
-      <h2>Calcul direct</h2>
-      <p class="muted">Tu connais ta VMA et tu sais ce que tu veux travailler. Saisis ton format (10/10, 30/30…) ou ta distance (400 m, 1 km…) et obtiens ta distance ou ton temps à réaliser.</p>
+  <div class="hx">
+    <div>
+      <div class="kick">La performance, à votre rythme</div>
+      <h2 class="hx-t">Repoussez<br>vos <em>limites.</em><br>Pas vos repères.</h2>
+      <p>Un entraînement intelligent commence par une meilleure connaissance de soi. Évaluez votre niveau, définissez vos allures et progressez avec méthode, quel que soit votre point de départ.</p>
+      <div class="hx-b"><button class="hbtn" data-go="eval">Explorer les outils ↗</button><button class="hbtn ghost" id="hxMore">Découvrir Run Dine</button></div>
     </div>
-    <div class="card entry" data-go="prof">
-      <div class="ico">🧭</div>
-      <h2>Mieux vous connaître</h2>
-      <p class="muted">Âge, pratique, séances, VMA, fréquence cardiaque, chronos, objectif… Le site te situe parmi 4 niveaux et te propose tes allures et ta semaine type.</p>
+    <div class="hx-r"><img src="logo.jpg" alt="Run Dine — Intelligence, Progression, Endurance, Power"></div>
+  </div>
+  <div class="steps">
+    <div><b>01 / Évaluer</b><span>Connaître son niveau</span></div>
+    <div><b>02 / Planifier</b><span>Définir ses repères</span></div>
+    <div><b>03 / Progresser</b><span>Construire durablement</span></div>
+  </div>
+  <div class="kick" id="hxApp">Un accompagnement structuré</div>
+  <div class="hx2">
+    <h2>Votre progression<br><em>se construit ici.</em></h2>
+    <p>Des repères simples et des outils concrets pour transformer vos sensations en décisions d'entraînement pertinentes.</p>
+  </div>
+  <div class="feat">
+    <div class="fcard" data-go="eval"><span class="n">01 — Évaluation</span><h3>Évaluer son potentiel</h3><p>VMA, fréquence cardiaque, chronos et tests : posez des bases fiables pour mieux comprendre votre profil.</p><span class="go">Accéder à l'évaluation ↗</span></div>
+    <div class="fcard" data-go="calc"><span class="n">02 — Fractionnés</span><h3>Définir ses allures</h3><p>Déterminez avec précision vos temps de travail ou votre distance, avec des zones adaptées à votre niveau.</p><span class="go">Calculer mes fractionnés ↗</span></div>
+    <div class="fcard" data-go="prof"><span class="n">03 — Programmation</span><h3>S'entraîner avec sens</h3><p>Fractionné, endurance et récupération : un plan d'entraînement construit autour de votre objectif.</p><span class="go">Construire mon plan ↗</span></div>
+  </div>
+  <div class="quote">« La qualité du travail dépend de la connaissance de tes limites. Je t'oriente, à toi d'écouter tes sensations. » — Kevin Aldon, entraîneur</div>
+</section>
+
+<!-- ÉVALUATION -->
+<section id="eval">
+  <h2 style="margin:0 0 2px;font-size:30px">Évaluation</h2>
+  <p class="sub2">Ici, saisissez vos données pour des réponses qui vous correspondent.</p>
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <h2>Qui es-tu ?</h2>
+        <div class="row">
+          <div><label>Âge</label><input id="pAge" type="number" min="8" max="95" placeholder="ex. 42"></div>
+          <div><label>Sexe (pour situer le niveau)</label><select id="pSex"><option value="">—</option><option value="H">Homme</option><option value="F">Femme</option></select></div>
+        </div>
+        <label>Ta pratique de la course</label>
+        <select id="pPrac">
+          <option value="jamais">Je n'ai jamais couru régulièrement</option>
+          <option value="reprise">Je reprends après un long arrêt</option>
+          <option value="loisir" selected>Je cours régulièrement, en loisir</option>
+          <option value="reg2">Je cours régulièrement depuis plus de 2 ans</option>
+          <option value="compreg">Je fais de la compétition (régional)</option>
+          <option value="compnat">Je fais de la compétition (national)</option>
+          <option value="inter">Athlète de niveau international</option>
+        </select>
+        <div class="check"><input type="checkbox" id="pSoft"><span>Je démarre avec du surpoids ou après un très long arrêt : je veux commencer en douceur.</span></div>
+        <label>Séances de course par semaine</label>
+        <input id="pSes" type="number" min="1" max="14" value="3">
+      </div>
+      <div class="card">
+        <h2>Tes repères</h2>
+        <div class="row">
+          <div><label>VMA (km/h) — si connue</label><input id="pVma" type="number" step="0.1" min="6" max="26" placeholder="ex. 15"></div>
+          <div><label>&nbsp;</label><button class="btn ghost" style="margin:0;width:100%" id="goTests">Pas de VMA ? Fais un test</button></div>
+        </div>
+        <div class="row">
+          <div><label>FC max (bpm)</label><input id="pFcm" type="number" min="120" max="230" placeholder="estimée si vide"></div>
+          <div><label>FC de repos (bpm)</label><input id="pFcr" type="number" min="30" max="110" placeholder="au réveil, allongé"></div>
+        </div>
+        <label>Chronos récents (facultatif) — ex. 45:30 ou 1:52:00</label>
+        <div class="row3">
+          <div><input id="p10" type="text" placeholder="10 km"></div>
+          <div><input id="pSemi" type="text" placeholder="Semi"></div>
+          <div><input id="pMara" type="text" placeholder="Marathon"></div>
+        </div>
+      </div>
+      <button class="btn" id="analyseE" style="width:100%">Analyser mon profil</button>
+    </div>
+    <div id="evalOut">
+      <div class="card"><h2>Ton profil</h2><p class="muted">Remplis tes informations puis clique sur « Analyser mon profil ». Tes réponses sont sauvegardées automatiquement sur ton compte.</p></div>
     </div>
   </div>
 </section>
 
-<!-- CALCUL DIRECT -->
+<!-- CALCULER VOS FRACTIONNÉS -->
 <section id="calc">
+  <h2 style="margin:0 0 2px;font-size:30px">Calculer vos fractionnés</h2>
+  <p class="sub2">Ici, déterminez avec précision vos temps de travail ou votre distance.</p>
   <div class="grid2">
     <div>
-      <div class="card">
+      <div class="card recap"><span id="cRecap" class="muted"></span><button class="lnk" data-go="eval">Modifier mon évaluation</button></div>
+      <div class="card hide" id="cProfCard">
         <h2>Ton profil express</h2>
         <div class="row">
           <div><label>VMA (km/h)</label><input id="cVma" type="number" step="0.1" min="6" max="26" value="15"></div>
@@ -281,45 +380,10 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
 
 <!-- PROFIL -->
 <section id="prof">
+  <h2 style="margin:0 0 2px;font-size:30px">Programmation</h2>
+  <p class="sub2">Ici, réservez un plan d'entraînement en fonction de votre objectif.</p>
   <div class="grid2">
     <div>
-      <div class="card">
-        <h2>Qui es-tu ?</h2>
-        <div class="row">
-          <div><label>Âge</label><input id="pAge" type="number" min="8" max="95" placeholder="ex. 42"></div>
-          <div><label>Sexe (pour situer le niveau)</label><select id="pSex"><option value="">—</option><option value="H">Homme</option><option value="F">Femme</option></select></div>
-        </div>
-        <label>Ta pratique de la course</label>
-        <select id="pPrac">
-          <option value="jamais">Je n'ai jamais couru régulièrement</option>
-          <option value="reprise">Je reprends après un long arrêt</option>
-          <option value="loisir" selected>Je cours régulièrement, en loisir</option>
-          <option value="reg2">Je cours régulièrement depuis plus de 2 ans</option>
-          <option value="compreg">Je fais de la compétition (régional)</option>
-          <option value="compnat">Je fais de la compétition (national)</option>
-          <option value="inter">Athlète de niveau international</option>
-        </select>
-        <div class="check"><input type="checkbox" id="pSoft"><span>Je démarre avec du surpoids ou après un très long arrêt : je veux commencer en douceur.</span></div>
-        <label>Séances de course par semaine</label>
-        <input id="pSes" type="number" min="1" max="14" value="3">
-      </div>
-      <div class="card">
-        <h2>Tes repères</h2>
-        <div class="row">
-          <div><label>VMA (km/h) — si connue</label><input id="pVma" type="number" step="0.1" min="6" max="26" placeholder="ex. 15"></div>
-          <div><label>&nbsp;</label><button class="btn ghost" style="margin:0;width:100%" id="goTests">Pas de VMA ? Fais un test</button></div>
-        </div>
-        <div class="row">
-          <div><label>FC max (bpm)</label><input id="pFcm" type="number" min="120" max="230" placeholder="estimée si vide"></div>
-          <div><label>FC de repos (bpm)</label><input id="pFcr" type="number" min="30" max="110" placeholder="au réveil, allongé"></div>
-        </div>
-        <label>Chronos récents (facultatif) — ex. 45:30 ou 1:52:00</label>
-        <div class="row3">
-          <div><input id="p10" type="text" placeholder="10 km"></div>
-          <div><input id="pSemi" type="text" placeholder="Semi"></div>
-          <div><input id="pMara" type="text" placeholder="Marathon"></div>
-        </div>
-      </div>
       <div class="card">
         <h2>Que prépares-tu ?</h2>
         <div class="radio">
@@ -337,6 +401,9 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
         </div>
         <div id="objTime" class="hide"><label>Quel temps vises-tu ? (ex. 50:00 ou 1:45:00)</label><input id="pObjT" type="text" placeholder="ex. 50:00"></div>
         <h3>Ton plan d'entraînement</h3>
+        <label>Séances par semaine pour ce projet</label>
+        <input id="pSesP" type="number" min="1" max="14" placeholder="reprend ton évaluation">
+        <p class="note" style="margin-top:4px">Dans l'évaluation, tu as indiqué ce que tu fais d'habitude. Ici, indique ce que tu envisages pour ce projet : c'est ce nombre qui construit ton plan.</p>
         <label>Durée du plan</label>
         <select id="pPlan">
           <option value="0">Pas de plan, juste ma semaine type</option>
@@ -349,11 +416,11 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
           <label><input type="radio" name="ori" value="vma"> Développer ma VMA (aller plus vite)</label>
           <label><input type="radio" name="ori" value="tenir"> Tenir ma VMA plus longtemps (durer à haute allure)</label>
         </div>
-        <button class="btn" id="analyse">Analyser mon profil</button>
+        <button class="btn" id="analyse">Construire mon plan</button>
       </div>
     </div>
     <div id="profOut">
-      <div class="card"><h2>Ton profil</h2><p class="muted">Remplis le questionnaire puis clique sur « Analyser mon profil ». Tes réponses sont sauvegardées automatiquement sur ton compte.</p></div>
+      <div class="card"><h2>Ton plan</h2><p class="muted">Commence par ton évaluation, puis choisis ton objectif et clique sur « Construire mon plan ». Tes réponses sont sauvegardées automatiquement sur ton compte.</p></div>
     </div>
   </div>
 </section>
@@ -575,6 +642,7 @@ function recAdvice(pct,work,lv,intermittent,kForce){
    case'vit':return{lo:90,hi:180,comp:'complète',nat:'passive : marche',why:'Vitesse pure : récup <b>complète</b> (1\'30 à 3\'), sinon les réserves de phosphocréatine ne se reconstituent pas et tu ne travailles plus la vitesse (la moitié se recharge en 30 s, la quasi-totalité en 3 min).'};}}
 
 function calc(){
+  {const v=+$('cVma').value,l=$('cLv');$('cRecap').innerHTML=v?`Calculé avec ta VMA <b>${String(v).replace('.',',')} km/h</b> · ${l.options[l.selectedIndex].text.split(' —')[0]}`:'Fais ton évaluation pour des calculs à ta mesure.';}
   const vma=+$('cVma').value,lv=curLv(),baseLv=+$('cLv').value-1,pct=+$('cPct').value;
   $('pVal').textContent=pct+' %';
   {const v0=+$('cVma').value,b=+$('cLv').value-1,th=[12,15,19],sug=v0?(v0<th[0]?0:v0<th[1]?1:v0<th[2]?2:3):null;
@@ -630,9 +698,10 @@ $('goTests').onclick=()=>show('test');
 const objVal=()=>document.querySelector('input[name=obj]:checked').value;
 const PRAC={jamais:0,reprise:0,loisir:1,reg2:1,compreg:2,compnat:2,inter:3};
 
-$('analyse').onclick=analyse;
-function analyse(quiet){
-  const age=gAgeW=+$('pAge').value||null,sex=$('pSex').value,prac=$('pPrac').value,soft=$('pSoft').checked,ses=Math.max(1,+$('pSes').value||2);
+$('analyse').onclick=()=>analyse(false,'prof');$('analyseE').onclick=()=>analyse(false,'eval');
+$('hxMore').onclick=()=>$('hxApp').scrollIntoView({behavior:'smooth'});
+function analyse(quiet,from){
+  const age=gAgeW=+$('pAge').value||null,sex=$('pSex').value,prac=$('pPrac').value,soft=$('pSoft').checked,ses=Math.max(1,+$('pSes').value||2),sesP=Math.max(1,+$('pSesP').value||ses);
   let vma=+$('pVma').value||null,fcm=+$('pFcm').value||null,fcr=+$('pFcr').value||null;
   const notes=[],out=[];let lvP=PRAC[prac],why=[];
   // chronos
@@ -648,7 +717,7 @@ function analyse(quiet){
   if(soft){lv=0;why.push('démarrage en douceur demandé → N1');}
   // FC
   let fcEst=false;if(!fcm&&age){fcm=Math.round(208-.7*age);fcEst=true;}
-  if(!vma){$('profOut').innerHTML=`<div class="card"><h2>Il me manque ta VMA</h2><p>Saisis ta VMA ou un chrono récent, ou fais l'un des tests proposés. Sans elle, je ne peux pas calculer tes allures.</p><p>Niveau pressenti : <b>${LVN[lv]}</b></p><button class="btn" onclick="show('test')">Faire un test de VMA</button></div>`;return;}
+  if(!vma){const m=`<div class="card"><h2>Il me manque ta VMA</h2><p>Saisis ta VMA ou un chrono récent dans ton évaluation, ou fais l'un des tests proposés. Sans elle, je ne peux pas calculer tes allures.</p><p>Niveau pressenti : <b>${LVN[lv]}</b></p><button class="btn" onclick="show('test')">Faire un test de VMA</button></div>`;$('evalOut').innerHTML=m;$('profOut').innerHTML=m;return;}
   // cohérence & profil endurant / véloce
   let prof='';
   ch.forEach(c=>{const sp=c[0]/(c[1]/3600),f=sp/vma,exp=fracFor(c[0],lv),est=sp/exp,nm=c[0]===10?'10 km':c[0]<30?'semi':'marathon';
@@ -666,7 +735,7 @@ function analyse(quiet){
   const obj=objVal();let objHtml='',objD=null,targetKmh=null;
   if(obj!=='forme'){objD=$('pObjD').value==='autre'?+$('pObjDo').value:+$('pObjD').value;}
   const dn=d=>d===21.0975?'semi-marathon':d===42.195?'marathon':(d+' km').replace('.',',');
-  if(obj==='forme')objHtml=`<p><b>Remise en forme.</b> Priorité à l'endurance tranquille et à un fractionné court ludique (côtes, 15/15) pour ressentir l'effort sans te mettre dans le rouge. L'objectif numéro 1 : la régularité, ${Math.min(ses,3)} séances par semaine.</p>`;
+  if(obj==='forme')objHtml=`<p><b>Remise en forme.</b> Priorité à l'endurance tranquille et à un fractionné court ludique (côtes, 15/15) pour ressentir l'effort sans te mettre dans le rouge. L'objectif numéro 1 : la régularité, ${Math.min(sesP,3)} séances par semaine.</p>`;
   if(obj==='tenir'){const a=vma*.65,b=vma*.75;objHtml=`<p><b>Tenir ${dn(objD)}.</b> Allure de confort : <b>${pace(b)} à ${pace(a)}</b> (${kmh(a)}–${kmh(b)}). Temps estimé pour finir sans exploser : <b>${fmt(objD/b*3600)} à ${fmt(objD/a*3600)}</b>.</p><p>La sortie longue est ta séance clé : augmente sa durée d'environ 10 % par semaine. Le fractionné reste là pour te faire ressentir l'effort et rendre l'allure de confort… encore plus confortable.</p>`;}
   let goalT=null;
   if(obj==='temps'){const t=parseT($('pObjT').value,objD>15);goalT=t;
@@ -680,10 +749,10 @@ function analyse(quiet){
       else verdict=`<span class="pill p-warn">Pas encore</span> Aujourd'hui, ton chrono réaliste est d'environ <b>${fmt(real)}</b>. Pour aller chercher ${fmt(t)}, il faut construire une VMA d'environ <b>${kmh(targetKmh/exp)}</b>. Ce n'est pas impossible : c'est une étape après l'autre.`;
       objHtml=`<p><b>${dn(objD)} en ${fmt(t)}</b> → allure cible <b>${pace(targetKmh)}</b> (${kmh(targetKmh)}), soit <b>${Math.round(need*100)} % de ta VMA</b>. On tient habituellement ≈ ${Math.round(exp*100)} % sur cette distance à ton niveau.</p><p>${verdict}</p>`;}}
   // semaine type
-  const week=buildWeek(lv,vma,ses,obj,objD,targetKmh);
+  const week=buildWeek(lv,vma,sesP,obj,objD,targetKmh);
   out.push(`<div class="card"><span class="tag">Ton profil</span><h2>${LVN[lv]}</h2><p class="note" style="margin-top:-6px">Repère du niveau : ${LVV[lv]}</p>
     <p>VMA : <b>${kmh(vma)}</b> (${vmaSrc})${fcm?` · FC max : <b>${fcm} bpm</b>${fcEst?' (estimée, ± 10)':''}`:''}${fcr?` · FC repos : <b>${fcr} bpm</b>`:''}</p>
-    <p class="note">Niveau retenu au plus prudent : ${why.join(' · ')}. Tu peux monter d'un cran avec le mode Défi.</p>
+    <p class="note">Niveau retenu au plus prudent : ${why.join(' · ')}.</p>
     ${prof?`<p>${prof}</p>`:''}
     ${notes.map(n=>`<p><span class="pill p-${n[0]}">${n[0]==='warn'?'Attention':'Conseil'}</span> ${n[1]}</p>`).join('')}
     ${fcr&&fcr<50&&lv<2?'<p class="note">Ta FC de repos est basse : bon signe pour ton moteur aérobie.</p>':''}
@@ -693,8 +762,9 @@ function analyse(quiet){
     ${targetKmh?`<tr><td><b>Allure spécifique</b></td><td>${Math.round(targetKmh/vma*100)} %</td><td>${kmh(targetKmh)}</td><td><b>${pace(targetKmh)}</b></td><td>—</td></tr>`:''}
     </tbody></table><p class="note">${fcm?(fcr?'FC calculées avec la méthode de Karvonen (FC de réserve).':'Sans FC de repos, les FC sont un % de la FC max : moins précis. Ajoute ta FC de repos.'):'Ajoute ton âge ou ta FC max pour obtenir tes zones cardiaques.'} Sur le fractionné court, règle-toi à l'allure, pas au cardio.</p></div>`);
   out.push(`<div class="card"><h2>Ton objectif</h2>${objHtml}</div>`);
-  out.push(`<div class="card"><h2>Ta semaine type (${ses} séance${ses>1?'s':''})</h2><ol class="week">${week}</ol>
+  out.push(`<div class="card"><h2>Ta semaine type (${sesP} séance${sesP>1?'s':''})</h2><ol class="week">${week}</ol>
     <p class="note">Espace les séances intenses d'au moins 48 h. Ressenti visé sur les séances de qualité : ${RPE[lv]}.</p>
+    ${sesP!==ses?`<p class="note">Plan construit sur <b>${sesP} séances</b> par semaine (tu en fais ${ses} d'habitude).</p>`:''}
     <button class="btn" id="toCalc">⚡ Calculer une séance avec mon profil</button></div>`);
   const nW=+$('pPlan').value;
   if(nW){const oc=document.querySelector('input[name=ori]:checked').value,O=orientation(oc,age,prac,lv);
@@ -704,15 +774,17 @@ function analyse(quiet){
     out.push(`<div class="card"><span class="tag">Ton plan</span><h2>${nW} semaines · ${O[0]==='vma'?'Développer la VMA':'Tenir la VMA'}</h2>
       <p>${O[1]}</p>
       <p class="note">Repère scientifique : la VMA (VO₂max) reste entraînable à tout âge, mais elle plafonne vers 25–30 ans et baisse ensuite d'environ 5 à 10 % par décennie (moins chez ceux qui s'entraînent). Chez un coureur expérimenté, les gains après 35–40 ans viennent surtout de la capacité à tenir un % élevé de sa VMA. Dans tous les cas, le plan commence par du développement de la VMA.</p>
-      ${buildPlan(nW,lv,vma,ses,obj,objD,targetKmh,O[0],goalTxt)}
+      ${buildPlan(nW,lv,vma,sesP,obj,objD,targetKmh,O[0],goalTxt)}
       <p class="note">Les séances deviennent plus exigeantes chaque semaine (plus de répétitions, % un peu plus élevés). Si une semaine est trop dure, refais-la avant de passer à la suivante : on progresse en réussissant ses séances.</p>
       <button class="btn ghost noprint" onclick="document.querySelectorAll('details.wk').forEach(d=>d.open=true);window.print()">🖨️ Imprimer mon plan</button></div>`);}
-  $('profOut').innerHTML=out.join('');
+  $('evalOut').innerHTML=out.slice(0,2).join('')+`<div class="card"><p>Ton évaluation est faite. Passe à la suite :</p><button class="btn" data-go2="calc">⚡ Calculer mes fractionnés</button> <button class="btn ghost" data-go2="prof">🗓️ Construire mon plan</button></div>`;
+  $('evalOut').querySelectorAll('[data-go2]').forEach(b=>b.onclick=()=>show(b.dataset.go2));
+  $('profOut').innerHTML=out.slice(2).join('');
   $('toCalc').onclick=()=>{$('cVma').value=vma;$('cLv').value=lv+1;$('cAge').value=age||'';$('cFcm').value=+$('pFcm').value||'';$('cFcr').value=fcr||'';$('cDefi').checked=false;calc();show('calc');};
   setProf({vma,lv,fcm,fcr,fcEst,tk:targetKmh,objD:obj==='temps'?objD:null,src:'profil'});
   $('cLv').value=lv+1;if(!$('cVma').value||!quiet)$('cVma').value=vma;if(age)$('cAge').value=age;if(+$('pFcm').value)$('cFcm').value=$('pFcm').value;if(fcr)$('cFcr').value=fcr;calc();
   window.lastResume={niveau:LVN[lv],vma:Math.round(vma*10)/10,objectif:obj==='forme'?'Remise en forme':obj==='tenir'?'Tenir '+dn(objD):(goalT?dn(objD)+' en '+fmt(goalT):dn(objD))};
-  if(!quiet){$('profOut').scrollIntoView({behavior:'smooth'});if(typeof scheduleSave==='function')scheduleSave();}
+  if(!quiet){$(from==='eval'?'evalOut':'profOut').scrollIntoView({behavior:'smooth'});if(typeof scheduleSave==='function')scheduleSave();}
 }
 
 /* Séances paramétrées : s = charge (0 → 1), light = semaine allégée */
@@ -861,7 +933,7 @@ document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{const k=b.dat
   if(k==='10'){const t=parseT($('t10').value,false);testV=t?10/(t/3600)/.88:0;}
   if(testV>4&&testV<27){testV=Math.round(testV*10)/10;$('testOut').textContent=`VMA estimée : ${kmh(testV)}`;$('testUse').classList.remove('hide');}
   else{$('testOut').textContent='Valeur incohérente, vérifie ta saisie.';$('testUse').classList.add('hide');}});
-$('testUse').onclick=()=>{$('cVma').value=testV;$('pVma').value=testV;setVma(testV);calc();show('prof');};
+$('testUse').onclick=()=>{$('cVma').value=testV;$('pVma').value=testV;setVma(testV);calc();show('eval');};
 
 calc();
 
@@ -870,8 +942,8 @@ const SB_URL='https://zjzamoprkqicywezzidr.supabase.co',SB_KEY='sb_publishable_a
 const SB=window.supabase?window.supabase.createClient(SB_URL,SB_KEY):null;
 let ME=null,gTab='run',gMode='in',saveT=null,loading=false;
 const mail=u=>`${u.trim().toLowerCase()}@${DOM}`;
-const PF=['pAge','pSex','pPrac','pSoft','pSes','pVma','pFcm','pFcr','p10','pSemi','pMara','pObjD','pObjDo','pObjT','pPlan'],CF=['cVma','cLv','cAge','cFcm','cFcr','cDefi'];
-const LAB={pAge:'Âge',pSex:'Sexe',pPrac:'Pratique',pSoft:'Démarrage en douceur',pSes:'Séances / semaine',pVma:'VMA',pFcm:'FC max',pFcr:'FC repos',p10:'Chrono 10 km',pSemi:'Chrono semi',pMara:'Chrono marathon',pObjD:'Distance objectif',pObjDo:'Distance perso',pObjT:'Temps visé',pPlan:'Plan (semaines)',obj:'Objectif',ori:'Priorité'};
+const PF=['pAge','pSex','pPrac','pSoft','pSes','pSesP','pVma','pFcm','pFcr','p10','pSemi','pMara','pObjD','pObjDo','pObjT','pPlan'],CF=['cVma','cLv','cAge','cFcm','cFcr','cDefi'];
+const LAB={pAge:'Âge',pSex:'Sexe',pPrac:'Pratique',pSoft:'Démarrage en douceur',pSes:'Séances / semaine (habitude)',pSesP:'Séances / semaine (projet)',pVma:'VMA',pFcm:'FC max',pFcr:'FC repos',p10:'Chrono 10 km',pSemi:'Chrono semi',pMara:'Chrono marathon',pObjD:'Distance objectif',pObjDo:'Distance perso',pObjT:'Temps visé',pPlan:'Plan (semaines)',obj:'Objectif',ori:'Priorité'};
 function grab(ids){const o={};ids.forEach(i=>{const e=$(i);if(e)o[i]=e.type==='checkbox'?e.checked:e.value;});return o;}
 function put(o,ids){ids.forEach(i=>{const e=$(i);if(e&&o&&i in o){if(e.type==='checkbox')e.checked=!!o[i];else e.value=o[i];}});}
 async function fnCall(body){const{data,error}=await SB.functions.invoke('rd-auth',{body});
@@ -933,7 +1005,7 @@ function scheduleSave(){if(!ME||loading)return;clearTimeout(saveT);saveT=setTime
 async function saveNow(){if(!ME)return;const row={user_id:ME.id,profil:collectProfil(),calc:grab(CF),updated_at:new Date().toISOString()};
   if(window.lastResume)row.resume=window.lastResume;
   const{error}=await SB.from('rd_data').upsert(row);$('saveState').textContent=error?'⚠️ non sauvegardé':'✓ sauvegardé';setTimeout(()=>$('saveState').textContent='',2500);}
-['prof','calc'].forEach(id=>{$(id).addEventListener('input',scheduleSave);$(id).addEventListener('change',scheduleSave);$(id).addEventListener('click',e=>{if(e.target.closest('.chip,.seg button,.pbtn'))scheduleSave();});});
+['eval','prof','calc'].forEach(id=>{$(id).addEventListener('input',scheduleSave);$(id).addEventListener('change',scheduleSave);$(id).addEventListener('click',e=>{if(e.target.closest('.chip,.seg button,.pbtn'))scheduleSave();});});
 
 /* ----- administration ----- */
 $('admRefresh').onclick=loadAdmin;
