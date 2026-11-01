@@ -131,7 +131,7 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
 .hx-t{font:800 46px/0.98 "Barlow Condensed",Inter,sans-serif;margin:12px 0 14px;text-transform:uppercase;letter-spacing:.5px}
 @media(min-width:760px){.hx-t{font-size:62px}}
 .hx-t em,.hx2 em{font-style:normal;color:#c5f02c}
-.hx p{color:#aeb6c4;margin:0 0 18px;max-width:46ch}
+.hx p{color:#aeb6c4;margin:0;max-width:46ch}
 .hx-b{display:flex;gap:10px;flex-wrap:wrap}
 .hbtn{border:0;border-radius:999px;padding:12px 20px;font:800 14px Inter;letter-spacing:.06em;text-transform:uppercase;background:#c5f02c;color:#0b0d10;cursor:pointer}
 .hbtn.ghost{background:transparent;color:#fff;border:1.5px solid #3a404c}
@@ -212,7 +212,6 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
       <div class="kick">La performance, à votre rythme</div>
       <h2 class="hx-t">Repoussez<br>vos <em>limites.</em><br>Pas vos repères.</h2>
       <p>Un entraînement intelligent commence par une meilleure connaissance de soi. Évaluez votre niveau, définissez vos allures et progressez avec méthode, quel que soit votre point de départ.</p>
-      <div class="hx-b"><button class="hbtn" data-go="eval">Explorer les outils ↗</button><button class="hbtn ghost" id="hxMore">Découvrir Run Dine</button></div>
     </div>
     <div class="hx-r"><img src="logo.jpg" alt="Run Dine — Intelligence, Progression, Endurance, Power"></div>
   </div>
@@ -699,7 +698,6 @@ const objVal=()=>document.querySelector('input[name=obj]:checked').value;
 const PRAC={jamais:0,reprise:0,loisir:1,reg2:1,compreg:2,compnat:2,inter:3};
 
 $('analyse').onclick=()=>analyse(false,'prof');$('analyseE').onclick=()=>analyse(false,'eval');
-$('hxMore').onclick=()=>$('hxApp').scrollIntoView({behavior:'smooth'});
 function analyse(quiet,from){
   const age=gAgeW=+$('pAge').value||null,sex=$('pSex').value,prac=$('pPrac').value,soft=$('pSoft').checked,ses=Math.max(1,+$('pSes').value||2),sesP=Math.max(1,+$('pSesP').value||ses);
   let vma=+$('pVma').value||null,fcm=+$('pFcm').value||null,fcr=+$('pFcr').value||null;
