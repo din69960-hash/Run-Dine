@@ -313,8 +313,8 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
       </div>
       <div class="card">
         <h2>Ce que tu veux travailler</h2>
-        <div class="seg" id="modeSeg"><button data-m="t" class="on">Par le temps</button><button data-m="d">Par la distance</button></div>
-        <div id="panT">
+        <div class="seg" id="modeSeg"><button data-m="d" class="on">Par la distance</button><button data-m="t">Par le temps</button></div>
+        <div id="panT" class="hide">
           <label>Format (effort / récupération, en secondes)</label>
           <div class="chips" id="fmtChips">
             <span class="chip" data-w="10" data-r="10">10/10</span>
@@ -330,7 +330,7 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
             <div><label>Ta récup perso (s)</label><input id="cR" type="number" min="0" max="1200" placeholder="ex. 20"></div>
           </div>
         </div>
-        <div id="panD" class="hide">
+        <div id="panD">
           <label>Distance (m)</label>
           <div class="chips" id="distChips">
             <span class="chip" data-d="60">60</span><span class="chip" data-d="100">100</span><span class="chip" data-d="200">200</span>
@@ -551,7 +551,7 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
 
 /* ---------- Calcul direct ---------- */
-let mode='t',W=15,R=15,D=400;
+let mode='d',W=15,R=15,D=400;
 function chipGroup(id,cb){const g=$(id);g.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{g.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');cb(c);calc();});}
 chipGroup('fmtChips',c=>{W=+c.dataset.w;R=+c.dataset.r;$('cW').value='';$('cR').value='';});
 chipGroup('distChips',c=>{D=+c.dataset.d;$('cD').value='';});
