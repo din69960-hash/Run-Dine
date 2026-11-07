@@ -70,6 +70,12 @@ input[type=number],input[type=text],select{width:100%;background:var(--bg2);colo
 .result .big{font-size:64px;font-weight:800;line-height:1;color:var(--acct)}
 .result .lab{color:var(--muted);font-size:14px}
 .result .sub{margin-top:8px;font-weight:600}
+.tiles{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:10px}
+.tile{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 12px;text-align:center}
+.tile .tl{color:var(--muted);font-size:13px;font-weight:600}
+.tile .tv{font-family:"Barlow Condensed",Inter,sans-serif;font-size:38px;font-weight:800;line-height:1.1;color:var(--acct);margin-top:4px}
+.tile .tf{color:var(--muted);font-size:13px;margin-top:2px}
+.tile.main{border-color:rgba(197,240,44,.5);background:linear-gradient(135deg,rgba(197,240,44,.14),rgba(159,212,0,.06))}
 .pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:700}
 .p-ok{background:rgba(46,204,113,.15);color:var(--ok)}
 .p-warn{background:rgba(245,176,65,.15);color:var(--warn)}
@@ -362,6 +368,14 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
           <div><label>Pause entre séries (min)</label><input id="cRs" type="number" min="0" max="15" value="3"></div>
         </div>
         <p id="rTot" class="note"></p>
+      </div>
+      <div class="card">
+        <h2 style="margin:0">📏 Distance de la séance</h2>
+        <div class="tiles" id="rDist"></div>
+      </div>
+      <div class="card">
+        <h2 style="margin:0">⏱️ Durée du fractionné</h2>
+        <div class="tiles" id="rDur"></div>
       </div>
       <div class="card">
         <h2>Les conseils du coach</h2>
@@ -660,6 +674,19 @@ function calc(){
   const totD=distM*rep*ser,totT=(work*rep+restS*(rep-1))*ser+rs*60*(ser-1);
   const unit=mode==='t'?`${W}''/${R}''`:`${D} m`;
   $('rTot').innerHTML=`<b>${ser} série${ser>1?'s':''} de ${rep} × ${unit}</b> = <b>${rep*ser} efforts</b> au total${ser>1?`, avec ${rs}' de pause entre chaque série`:''}.<br>Volume intense <b>${totD>=1000?(Math.round(totD/100)/10).toString().replace('.',',')+' km':Math.round(totD)+' m'}</b> (${fmt(work*rep*ser)} d'effort) · durée du bloc ≈ <b>${fmt(totT)}</b>`;
+  // écrans distance + durée
+  {const dRep=mode==='t'?Math.round(distM):D,fD=m=>m>=1000?(Math.round(m/10)/100).toString().replace('.',',')+' km':Math.round(m)+' m',
+    tl=(l,v,f,m)=>`<div class="tile${m?' main':''}"><div class="tl">${l}</div><div class="tv">${v}</div>${f?`<div class="tf">${f}</div>`:''}</div>`,
+    run1=work*rep,recIn=restS*(rep-1),pauses=rs*60*(ser-1);
+   let h='';
+   if(ser>1)h+=tl('Par bloc',fD(dRep*rep),`${Math.round(dRep)} m × ${rep}`);
+   h+=tl('Total de la séance',fD(dRep*rep*ser),`${Math.round(dRep)} m × ${rep}${ser>1?' × '+ser:''}`,1);
+   $('rDist').innerHTML=h;
+   h='';
+   if(ser>1)h+=tl('Course par bloc (hors récup)',fmt(run1),`${fmt(work)} × ${rep}`);
+   h+=tl(`Course totale${ser>1?' des blocs':''} (hors récup)`,fmt(run1*ser),`${fmt(work)} × ${rep}${ser>1?' × '+ser:''}`);
+   h+=tl('Temps total avec récup',fmt(totT),`récup entre efforts ${fmt(recIn*ser)}${ser>1?` · pauses ${fmt(pauses)}`:''}`,1);
+   $('rDur').innerHTML=h;}
   // conseils
   const f=filiere(pct,mode==='t'?work:refWork(),mode==='t'&&work<=60,lv),A=[];
   A.push(['Filière travaillée',`<b>${f[0]}</b> — ${f[1]}`]);
