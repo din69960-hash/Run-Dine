@@ -362,11 +362,15 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
           <div class="sub" id="rSub"></div>
           <div class="sub" id="rFc" style="color:var(--bad)"></div>
         </div>
-        <div class="row3" style="margin-top:12px">
-          <div><label>Répétitions (efforts par série)</label><input id="cRep" type="number" min="1" max="60" value="10"></div>
-          <div><label>Séries (nombre de blocs)</label><input id="cSer" type="number" min="1" max="10" value="2"></div>
-          <div><label>Pause entre séries (min)</label><input id="cRs" type="number" min="0" max="15" value="3"></div>
+        <div class="row" style="margin-top:12px">
+          <div><label>Nbr de séries</label><input id="cRep" type="number" min="1" max="60" value="10"></div>
+          <div><label>Nombre de blocs</label><input id="cSer" type="number" min="1" max="10" value="2"></div>
         </div>
+        <div class="row">
+          <div><label>Récup entre les séries</label><input id="cRec" type="text" inputmode="text" placeholder="ex. 15&quot; ou 1'30"></div>
+          <div><label>Pause entre les blocs</label><input id="cRs" type="text" inputmode="text" value="3'" placeholder="ex. 3' ou 1'30"></div>
+        </div>
+        <p class="muted" style="font-size:12px;margin:6px 0 0">Récup : un nombre seul = secondes. Pause : un nombre seul = minutes. Formats acceptés : 1'30, 1:30, 1,30.</p>
         <p id="rTot" class="note"></p>
       </div>
       <div class="card">
@@ -570,8 +574,18 @@ function fcTarget(pct,work){
   if(work<=90)main+=` Sur un effort de ${fmt(work)}, le cœur n'a pas le temps d'atteindre cette valeur pendant la répétition : elle s'observe en fin de série. Règle-toi d'abord à l'allure et au ressenti.`;
   return[main,line];}
 $('modeSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;$('modeSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
-  $('panT').classList.toggle('hide',mode!=='t');$('panD').classList.toggle('hide',mode!=='d');calc();});
+  $('panT').classList.toggle('hide',mode!=='t');$('panD').classList.toggle('hide',mode!=='d');recManual=false;calc();});
 ['cVma','cLv','cDefi','cRep','cSer','cRs'].forEach(i=>{$(i).oninput=calc;$(i).onchange=calc;});
+// durée saisie -> secondes ; unit = 's' (nombre seul en secondes) ou 'm' (en minutes)
+function parseT(str,unit){str=String(str||'').trim().replace(/["”″]/g,'').replace(/\s/g,'');if(!str)return null;
+  let m=str.match(/^(\d+)['’:](\d{1,2})?$/);if(m)return(+m[1])*60+(+(m[2]||0));
+  m=str.match(/^(\d+)[,.](\d{2})$/);if(m)return(+m[1])*60+(+m[2]);
+  const n=parseFloat(str.replace(',','.'));if(!isFinite(n))return null;return unit==='m'?Math.round(n*60):Math.round(n);}
+function fmtIn(s){s=Math.round(s);if(s<60)return s+'"';const mm=Math.floor(s/60),ss=s%60;return mm+"'"+(ss?String(ss).padStart(2,'0'):'');}
+let recManual=false;
+$('cRec').oninput=()=>{const v=parseT($('cRec').value,'s');recManual=v!=null;
+  if(mode==='t'&&v!=null){R=v;$('cR').value=v;}calc();};
+$('cRec').onblur=()=>calc();
 $('cPct').oninput=calc;
 $('pMinus').onclick=()=>{$('cPct').value=+$('cPct').value-1;calc();};
 $('pPlus').onclick=()=>{$('cPct').value=+$('cPct').value+1;calc();};
@@ -669,15 +683,16 @@ function calc(){
   else if(pct>z[1]+2){zp.className='pill p-bad';zp.textContent='Au-dessus : très dur pour ce niveau';}
   else{zp.className='pill p-ok';zp.textContent='Dans la zone ✓';}
   // totaux
-  const rep=+$('cRep').value||1,ser=+$('cSer').value||1,rs=+$('cRs').value||0;
-  let restS;if(mode==='t')restS=R;else{const ra=recAdvice(pct,work,lv,false);restS=(ra.lo+ra.hi)/2;}
-  const totD=distM*rep*ser,totT=(work*rep+restS*(rep-1))*ser+rs*60*(ser-1);
+  const rep=+$('cRep').value||1,ser=+$('cSer').value||1,rs=parseT($('cRs').value,'m')||0;
+  let restS;if(mode==='t')restS=R;else{const ra=recAdvice(pct,work,lv,false),au=Math.round((ra.lo+ra.hi)/2/5)*5;restS=recManual?parseT($('cRec').value,'s'):au;}
+  if(document.activeElement!==$('cRec'))$('cRec').value=fmtIn(restS);
+  const totD=distM*rep*ser,totT=(work*rep+restS*(rep-1))*ser+rs*(ser-1);
   const unit=mode==='t'?`${W}''/${R}''`:`${D} m`;
-  $('rTot').innerHTML=`<b>${ser} série${ser>1?'s':''} de ${rep} × ${unit}</b> = <b>${rep*ser} efforts</b> au total${ser>1?`, avec ${rs}' de pause entre chaque série`:''}.<br>Volume intense <b>${totD>=1000?(Math.round(totD/100)/10).toString().replace('.',',')+' km':Math.round(totD)+' m'}</b> (${fmt(work*rep*ser)} d'effort) · durée du bloc ≈ <b>${fmt(totT)}</b>`;
+  $('rTot').innerHTML=`<b>${ser} bloc${ser>1?'s':''} de ${rep} série${rep>1?'s':''} de ${unit}</b> = <b>${rep*ser} séries</b> au total · récup ${fmt(restS)} entre les séries${ser>1?` · pause ${fmt(rs)} entre les blocs`:''}.<br>Volume intense <b>${totD>=1000?(Math.round(totD/100)/10).toString().replace('.',',')+' km':Math.round(totD)+' m'}</b> (${fmt(work*rep*ser)} d'effort) · durée totale ≈ <b>${fmt(totT)}</b>`;
   // écrans distance + durée
   {const dRep=mode==='t'?Math.round(distM):D,fD=m=>m>=1000?(Math.round(m/10)/100).toString().replace('.',',')+' km':Math.round(m)+' m',
     tl=(l,v,f,m)=>`<div class="tile${m?' main':''}"><div class="tl">${l}</div><div class="tv">${v}</div>${f?`<div class="tf">${f}</div>`:''}</div>`,
-    run1=work*rep,recIn=restS*(rep-1),pauses=rs*60*(ser-1);
+    run1=work*rep,recIn=restS*(rep-1),pauses=rs*(ser-1);
    let h='';
    if(ser>1)h+=tl('Par bloc',fD(dRep*rep),`${Math.round(dRep)} m × ${rep}`);
    h+=tl('Total de la séance',fD(dRep*rep*ser),`${Math.round(dRep)} m × ${rep}${ser>1?' × '+ser:''}`,1);
@@ -685,7 +700,7 @@ function calc(){
    h='';
    if(ser>1)h+=tl('Course par bloc (hors récup)',fmt(run1),`${fmt(work)} × ${rep}`);
    h+=tl(`Course totale${ser>1?' des blocs':''} (hors récup)`,fmt(run1*ser),`${fmt(work)} × ${rep}${ser>1?' × '+ser:''}`);
-   h+=tl('Temps total avec récup',fmt(totT),`récup entre efforts ${fmt(recIn*ser)}${ser>1?` · pauses ${fmt(pauses)}`:''}`,1);
+   h+=tl('Temps total avec récup',fmt(totT),`récup entre séries ${fmt(recIn*ser)}${ser>1?` · pauses entre blocs ${fmt(pauses)}`:''}`,1);
    $('rDur').innerHTML=h;}
   // conseils
   const f=filiere(pct,mode==='t'?work:refWork(),mode==='t'&&work<=60,lv),A=[];
