@@ -1,5 +1,5 @@
 /* Service worker minimal : rend le site installable et garde une copie hors ligne de la page. */
-const CACHE='rundine-v3';
+const CACHE='rundine-v4';
 const ASSETS=['./','./index.html','./logo.jpg','./icon-192.png','./icon-512.png','./manifest.json'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
