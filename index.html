@@ -559,19 +559,29 @@ chipGroup('distChips',c=>{D=+c.dataset.d;$('cD').value='';});
 $('cD').oninput=()=>{const d=+$('cD').value;if(d>0){D=d;$('distChips').querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));}calc();};
 ['cAge','cFcm','cFcr'].forEach(i=>$(i).oninput=calc);
 
-/* FC visée selon % VMA : %FC de réserve ≈ %VO2max ≈ %VMA (Swain) ; sinon %FCmax ≈ 0,64 × %VMA + 37 */
+/* FC visée selon % VMA : %FC de réserve ≈ %VO2max ≈ %VMA (Swain) ; sans FC de repos, %FCmax ≈ 0,64 × %VMA + 37.
+   Correction cinétique : sur un effort court, la FC n'a pas le temps d'atteindre sa valeur d'équilibre
+   (montée en ~2–4 min). On plafonne donc la cible selon la durée de la répétition (repère en fin de répétition). */
+function fcCap(work){if(!work||!isFinite(work))return 100;
+  return work<=45?88:work<=90?91:work<=150?94:work<=240?96:work<=360?98:100;}
 function fcTarget(pct,work){
   const age=+$('cAge').value||null,fcr=+$('cFcr').value||null;let fcm=+$('cFcm').value||null,est=false;
   if(!fcm&&age){fcm=Math.round(208-.7*age);est=true;}
-  const p=Math.min(pct,100);let main,line;
-  if(fcm&&fcr){const lo=Math.round(fcr+(p-3)/100*(fcm-fcr)),hi=Math.min(fcm,Math.round(fcr+(p+3)/100*(fcm-fcr)));
-    main=`${Math.round(p)} % de ta FC de réserve → <b>${lo}–${hi} bpm</b>`;line=`❤️ FC visée : ${lo}–${hi} bpm`;}
-  else if(fcm){const pm=Math.min(100,Math.round(.64*p+37)),lo=Math.round(fcm*(pm-3)/100),hi=Math.min(fcm,Math.round(fcm*(pm+3)/100));
-    main=`≈ ${pm} % de ta FC max → <b>${lo}–${hi} bpm</b>. Ajoute ta FC de repos pour plus de précision (Karvonen).`;line=`❤️ FC visée : ${lo}–${hi} bpm`;}
-  else{const pm=Math.min(100,Math.round(.64*p+37));main=`≈ <b>${pm} % de ta FC max</b>. Renseigne ton âge ou ta FC max (et ta FC de repos) pour obtenir tes battements.`;line=`❤️ ≈ ${pm} % de ta FC max`;}
+  const p=Math.min(pct,100),cap=fcCap(work),capped=cap<100;
+  // cible d'équilibre en % FC max (bornes basse / haute)
+  let lo,hi;
+  if(fcm&&fcr){lo=(fcr+(p-3)/100*(fcm-fcr))/fcm*100;hi=(fcr+(p+3)/100*(fcm-fcr))/fcm*100;}
+  else{lo=.64*(p-3)+37;hi=.64*(p+3)+37;}
+  hi=Math.min(100,hi,cap);lo=Math.min(lo,cap-6,hi-3);
+  const pl=Math.round(lo),ph=Math.round(hi);let main,line;
+  const when=capped&&p>=80?' en fin de répétition':'';
+  if(fcm){const bl=Math.round(fcm*lo/100),bh=Math.min(fcm,Math.round(fcm*hi/100));
+    main=`≈ ${pl}–${ph} % de ta FC max → <b>${bl}–${bh} bpm</b>${when}${fcr?' (Karvonen)':'. Ajoute ta FC de repos pour plus de précision (Karvonen)'}.`;
+    line=`❤️ FC visée${when} : ${bl}–${bh} bpm`;}
+  else{main=`≈ <b>${pl}–${ph} % de ta FC max</b>${when}. Renseigne ton âge ou ta FC max (et ta FC de repos) pour obtenir tes battements.`;line=`❤️ ≈ ${pl}–${ph} % de ta FC max${when}`;}
   if(est)main+=` <span class="muted">(FC max estimée à ${fcm} bpm, ± 10)</span>`;
-  if(pct>100)main+=' Au-delà de 100 % de VMA, tu cours plus vite que la vitesse qui amène à la FC max : le cœur ira à son maximum si l\'effort dure plus de 2 à 3 min.';
-  if(work<=90)main+=` Sur un effort de ${fmt(work)}, le cœur n'a pas le temps d'atteindre cette valeur pendant la répétition : elle s'observe en fin de série. Règle-toi d'abord à l'allure et au ressenti.`;
+  if(capped&&p>=80)main+=` Sur un effort de ${fmt(work)}, le cœur n'a pas le temps d'atteindre sa valeur d'équilibre : la FC monte au fil des répétitions et ne dépasse guère ${cap} % de la FC max. Si tu es bien au-dessus dès la 1<sup>re</sup> répétition, tu pars trop vite. Règle-toi d'abord au chrono et au ressenti.`;
+  else if(pct>100)main+=' Au-delà de 100 % de VMA, le cœur ira à son maximum si l\'effort dure plus de 3 à 4 min.';
   return[main,line];}
 $('modeSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;$('modeSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
   $('panT').classList.toggle('hide',mode!=='t');$('panD').classList.toggle('hide',mode!=='d');recManual=false;calc();});
@@ -813,7 +823,7 @@ function analyse(quiet,from){
   if(lv===0)notes.push(['info','Un avis médical est conseillé avant de commencer le travail intense, surtout après un long arrêt ou avec du surpoids.']);
   // zones
   const Z=[['Récupération',55,65,50,60],['Capacité aérobie',65,75,60,75],['Seuil',80,90,80,90],['Puissance aérobie (VMA)',95,105,90,100],['Anaérobie lactique',110,125,null,null],['Vitesse',130,145,null,null]];
-  const fc=(a,b)=>{if(a==null||!fcm)return'—';if(fcr)return`${Math.round(fcr+a/100*(fcm-fcr))}–${Math.round(fcr+b/100*(fcm-fcr))}`;return`${Math.round(fcm*(a+10)/100)}–${Math.round(fcm*Math.min(100,b+8)/100)}`;};
+  const fc=(a,b)=>{if(a==null||!fcm)return'—';if(fcr)return`${Math.round(fcr+a/100*(fcm-fcr))}–${Math.round(fcr+b/100*(fcm-fcr))}`;return`${Math.round(fcm*(.67*a+33)/100)}–${Math.round(fcm*Math.min(100,.67*b+33)/100)}`;};
   // objectif
   const obj=objVal();let objHtml='',objD=null,targetKmh=null;
   if(obj!=='forme'){objD=$('pObjD').value==='autre'?+$('pObjDo').value:+$('pObjD').value;}
@@ -997,11 +1007,11 @@ function renderFil(){
     [`N1 : 3 × 4' à 80 %${Pa(80)}, récup 2'`,`N2 : 3 × 6' à 85 %${Pa(85)}, récup 2'`,`N3 : 3 × 10' à 87 %${Pa(87)}, récup 2'`,`N4 : 2 × 15' ou 40' continu à 88 %${Pa(88)}`],fc(80,90),'« Confortablement difficile » : phrases courtes. Ressenti 6–7/10.',true],
    ['Puissance aérobie (VMA)','92–120 % selon la durée d\'effort',al(95,105),'Relever le plafond : VO₂max. Le bon % dépend de la durée : <b>110–120 %</b> en 10/10 ou 15/15, <b>100–110 %</b> en 30/30, <b>100–105 %</b> sur 1\' à 2\'30 (300–600 m), <b>92–100 %</b> sur 2\'30 à 6\' (800–1500 m). À 100 % de VMA, on tient 4 à 7 min (Billat) ; l\'objectif est de cumuler environ 10 min près du VO₂max par séance (Buchheit & Laursen). <b>Selon le niveau</b>, on se place dans cette fourchette : le débutant en bas (voire un peu en dessous), le champion en haut. Exemple sur 800 m : N1 85–90 %, N2 88–92 %, N3 92–96 %, N4 95–100 %.',
     [0,1,2,3].map(i=>'N'+(i+1)+' : '+exVMA(i)),
-    fc(92,100,'sur le fractionné long ; en intermittent court, le cœur n\'a pas le temps d\'y monter'),'Tu ne peux plus parler. Ressenti 8–9/10.',true],
+    fc(92,100,'en fin de répétition sur les efforts de 3 à 6 min ; sur 1 à 3 min, plutôt 88–94 % de ta FC max ; en intermittent court, le cœur n\'a pas le temps d\'y monter'),'Tu ne peux plus parler. Ressenti 8–9/10.',true],
    ['Tenir la VMA','juste sous ta fourchette de puissance (≈ 85–95 %)',al(86,95),'Rester longtemps près de ta VMA : répétitions de 2 à 4 min avec récupération courte. C\'est ce qui fait la différence sur 5 et 10 km, et ce qui progresse encore après 35–40 ans.',
     [0,1,2,3].map(i=>'N'+(i+1)+' : '+exTenir(i)),fc(88,96),'Dur mais contrôlé : la dernière répétition doit être à la même allure que la première. Ressenti 8/10.',true],
    ['Anaérobie lactique','110–125 %',al(110,125),'Résister à l\'acidité musculaire. Utile pour le 800 m–1500 m, les fins de course et les sports collectifs.',
-    ['N1 : pas de travail spécifique, côtes courtes à la place',`N2 : 4 × 200 m à 115 %${T(115,200)}, récup 3'`,`N3 : 6 × 300 m à 112 %${T(112,300)}, récup 3–4'`,`N4 : 2 × (3 × 400 m) à 110 %${T(110,400)}, récup longue`],fc(95,100,'atteinte en fin de répétition ou de série ; règle-toi au chrono')+fcRec(P,65),'Jambes qui brûlent sur la fin. Ressenti 9/10.',true],
+    ['N1 : pas de travail spécifique, côtes courtes à la place',`N2 : 4 × 200 m à 115 %${T(115,200)}, récup 3'`,`N3 : 6 × 300 m à 112 %${T(112,300)}, récup 3–4'`,`N4 : 2 × (3 × 400 m) à 110 %${T(110,400)}, récup longue`],fc(88,96,'plutôt en fin de série qu\'en fin de répétition : sur 30 s à 1 min 30, le cœur n\'a pas le temps de monter ; règle-toi au chrono')+fcRec(P,65),'Jambes qui brûlent sur la fin. Ressenti 9/10.',true],
    ['Vitesse / alactique','> 125 %',al(125,145),'Explosivité, coordination, vitesse pure : efforts de moins de 10 s, récupération complète.',
     ['N1 : 4 × 40 m accélérations progressives',`N2 : 6 × 60 m à 125 %${T(125,60)}, récup 2'`,`N3 : 8 × 80 m à 130 %${T(130,80)}, récup 2–3'`,'N4 : départs, 60–150 m à vitesse max'],fcRec(P,60,'Pendant le sprint, la FC n\'a pas le temps de monter : elle n\'est pas un repère d\'intensité. '),'Rapide mais relâché. Récupère complètement.',true],
    ['Allure spécifique','% selon l\'objectif',specHead,P.tk?'Courir à l\'allure exacte de ta course objectif pour l\'automatiser.':'Courir à l\'allure exacte de ta course objectif pour l\'automatiser. Renseigne un objectif chronométré dans « Mieux vous connaître » pour ton allure précise.',
