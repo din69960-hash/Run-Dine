@@ -270,6 +270,9 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
           <div><label>FC max (bpm)</label><input id="pFcm" type="number" min="120" max="230" placeholder="estimée si vide"></div>
           <div><label>FC de repos (bpm)</label><input id="pFcr" type="number" min="30" max="110" placeholder="au réveil, allongé"></div>
         </div>
+        <label>Temps limite à VMA (tlim, en min) — facultatif</label>
+        <input id="pTlim" type="number" step="0.5" min="2" max="15" placeholder="ex. 6 — durée tenue à 100 % de ta VMA">
+        <p class="note" style="margin-top:4px">Le tlim (V. Billat) : combien de temps tu tiens à ta VMA avant de lâcher (4 à 10 min, 6 en moyenne). Il sert à calibrer tes fractions de VMA.</p>
         <label>Chronos récents (facultatif) — ex. 45:30 ou 1:52:00</label>
         <div class="row3">
           <div><input id="p10" type="text" placeholder="10 km"></div>
@@ -308,6 +311,8 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
           <div><input id="cFcm" type="number" min="120" max="230" placeholder="FC max"></div>
           <div><input id="cFcr" type="number" min="30" max="110" placeholder="FC repos"></div>
         </div>
+        <label>Temps limite à VMA (tlim, en min) — facultatif</label>
+        <input id="cTlim" type="number" step="0.5" min="2" max="15" placeholder="ex. 6">
         <p class="note" id="cLvHint" style="margin-top:4px"></p>
         <div class="check"><input type="checkbox" id="cDefi"><span><b>🔥 Mode Défi</b> — zone conseillée du niveau au-dessus, pour aller chercher le dépassement.</span></div>
       </div>
@@ -421,6 +426,9 @@ footer{max-width:980px;margin:10px auto 40px;padding:0 16px;color:var(--muted);f
           <option value="0">Pas de plan, juste ma semaine type</option>
           <option value="4">4 semaines</option><option value="5">5 semaines</option>
           <option value="6" selected>6 semaines</option><option value="8">8 semaines</option>
+          <option value="10">10 semaines</option><option value="12">12 semaines</option>
+          <option value="17">4 mois</option><option value="26">6 mois</option><option value="35">8 mois</option>
+          <option value="43">10 mois</option><option value="52">12 mois</option>
         </select>
         <label>Ta priorité</label>
         <div class="radio">
@@ -585,7 +593,7 @@ function fcTarget(pct,work){
   return[main,line];}
 $('modeSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;$('modeSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
   $('panT').classList.toggle('hide',mode!=='t');$('panD').classList.toggle('hide',mode!=='d');recManual=false;calc();});
-['cVma','cLv','cDefi','cRep','cSer','cRs'].forEach(i=>{$(i).oninput=calc;$(i).onchange=calc;});
+['cVma','cLv','cDefi','cRep','cSer','cRs','cTlim'].forEach(i=>{$(i).oninput=calc;$(i).onchange=calc;});
 // durée saisie -> secondes ; unit = 's' (nombre seul en secondes) ou 'm' (en minutes)
 function parseT(str,unit){str=String(str||'').trim().replace(/["”″]/g,'').replace(/\s/g,'');if(!str)return null;
   let m=str.match(/^(\d+)['’:](\d{1,2})?$/);if(m)return(+m[1])*60+(+(m[2]||0));
@@ -770,6 +778,12 @@ function calc(){
   A.push(['Ressenti visé (échelle de Borg)',`${RPE[lv]} sur la dernière répétition. Si tu ne tiens plus l'allure, arrête la série : la qualité avant la quantité.`]);
   const vol=[[4,8],[8,12],[12,18],[15,24]][lv];
   if(['puiss','puissInt','haut','hautInt','tenir','tenirInt'].includes(f[2]))A.push(['Volume conseillé',`${vol[0]} à ${vol[1]} min d'effort au total à cette intensité pour ton niveau.`]);
+  {const tl=+$('cTlim').value||0;
+   if(tl&&pct>=93&&pct<=108){const T=tl*60,intm=mode==='t'&&work<=60;
+     let tx=`Ton tlim : <b>${fmt(T)}</b>. `;
+     if(intm)tx+=`En intermittent court, la récupération te permet de cumuler plus de temps à VMA que ton tlim : vise <b>${fmt(T*1.5)} à ${fmt(T*2.5)}</b> d'effort au total.`;
+     else{const r=work/T;tx+=`Fractions idéales à VMA (Billat) : <b>${fmt(T*.5)} à ${fmt(T*.6)}</b> (50–60 % du tlim). La tienne dure ${fmt(work)}, soit <b>${Math.round(r*100)} %</b> de ton tlim${r>.65?' : trop longue, tu risques de finir chaque fraction épuisé. Raccourcis la distance ou baisse un peu le %.':r<.35?' : courte, c\'est plutôt de l\'intermittent ; tu peux augmenter le nombre de séries.':' : bien calibrée.'} Volume total conseillé : <b>${fmt(T*2)} à ${fmt(T*3)}</b> d'effort (2 à 3 × tlim), récupération = durée de l'effort en trottinant.`;}
+     A.push(['Calibrage sur ton tlim',tx]);}}
     const fcT=fcTarget(pct,work);$('rFc').textContent=fcT[1];
   A.splice(1,0,['Fréquence cardiaque visée',fcT[0]]);
   if(baseLv===0)A.push(['Message du coach','Tu démarres : vise la réussite de chaque répétition. Sur herbe ou sur piste plutôt que sur bitume. On raccourcira la récupération dans 4 à 6 semaines.']);
@@ -795,7 +809,7 @@ const PRAC={jamais:0,reprise:0,loisir:1,reg2:1,compreg:2,compnat:2,inter:3};
 $('analyse').onclick=()=>analyse(false,'prof');$('analyseE').onclick=()=>analyse(false,'eval');
 function analyse(quiet,from){
   const age=gAgeW=+$('pAge').value||null,sex=$('pSex').value,prac=$('pPrac').value,soft=$('pSoft').checked,ses=Math.max(1,+$('pSes').value||2),sesP=Math.max(1,+$('pSesP').value||ses);
-  let vma=+$('pVma').value||null,fcm=+$('pFcm').value||null,fcr=+$('pFcr').value||null;
+  let vma=+$('pVma').value||null,fcm=+$('pFcm').value||null,fcr=+$('pFcr').value||null;gTlim=+$('pTlim').value||null;
   const notes=[],out=[];let lvP=PRAC[prac],why=[];
   // chronos
   const ch=[[10,parseT($('p10').value,false)],[21.0975,parseT($('pSemi').value,true)],[42.195,parseT($('pMara').value,true)]].filter(c=>c[1]);
@@ -864,17 +878,19 @@ function analyse(quiet,from){
     const goalTxt=obj==='temps'&&targetKmh?`Ta course : <b>${dn(objD)} en ${fmt(goalT)}</b> à <b>${pace(targetKmh)}</b>. Les 2 jours avant : footing léger + 3 accélérations. Pars à ton allure, pas plus vite !`
       :obj==='tenir'?`Test : courir <b>${dn(objD)}</b> à allure confort (${pace(vma*.72)}). Si tu termines en contrôle, c'est gagné.`
       :`Test de VMA 6 minutes : cours le plus loin possible. Nouvelle VMA = distance ÷ 100. Compare à ${kmh(vma)} !`;
-    out.push(`<div class="card"><span class="tag">Ton plan</span><h2>${nW} semaines · ${O[0]==='vma'?'Développer la VMA':'Tenir la VMA'}</h2>
+    const grp=profGroup(prac,lv,soft),PL=buildPlan(nW,lv,vma,sesP,obj,objD,targetKmh,O[0],goalTxt,grp);
+    out.push(`<div class="card"><span class="tag">Ton plan</span><h2>${durTxt(nW)} · ${O[0]==='vma'?'Développer la VMA':'Tenir la VMA'}</h2>
       <p>${O[1]}</p>
-      <p class="note">Repère scientifique : la VMA (VO₂max) reste entraînable à tout âge, mais elle plafonne vers 25–30 ans et baisse ensuite d'environ 5 à 10 % par décennie (moins chez ceux qui s'entraînent). Chez un coureur expérimenté, les gains après 35–40 ans viennent surtout de la capacité à tenir un % élevé de sa VMA. Dans tous les cas, le plan commence par du développement de la VMA.</p>
-      ${buildPlan(nW,lv,vma,sesP,obj,objD,targetKmh,O[0],goalTxt)}
+      ${PL.why}
+      <p class="note">Repère scientifique : la VMA (VO₂max) reste entraînable à tout âge, mais elle plafonne vers 25–30 ans et baisse ensuite d'environ 5 à 10 % par décennie (moins chez ceux qui s'entraînent). Chez un coureur expérimenté, les gains après 35–40 ans viennent surtout de la capacité à tenir un % élevé de sa VMA.</p>
+      ${PL.html}
       <p class="note">Les séances deviennent plus exigeantes chaque semaine (plus de répétitions, % un peu plus élevés). Si une semaine est trop dure, refais-la avant de passer à la suivante : on progresse en réussissant ses séances.</p>
       <button class="btn ghost noprint" onclick="document.querySelectorAll('details.wk').forEach(d=>d.open=true);window.print()">🖨️ Imprimer mon plan</button></div>`);}
   $('evalOut').innerHTML=out.slice(0,2).join('')+`<div class="card"><p>Ton évaluation est faite. Passe à la suite :</p><button class="btn" data-go2="calc">⚡ Calculer mes fractionnés</button> <button class="btn ghost" data-go2="prof">🗓️ Construire mon plan</button></div>`;
   $('evalOut').querySelectorAll('[data-go2]').forEach(b=>b.onclick=()=>show(b.dataset.go2));
   $('profOut').innerHTML=out.slice(2).join('');
-  $('toCalc').onclick=()=>{$('cVma').value=vma;$('cLv').value=lv+1;$('cAge').value=age||'';$('cFcm').value=+$('pFcm').value||'';$('cFcr').value=fcr||'';$('cDefi').checked=false;calc();show('calc');};
-  setProf({vma,lv,fcm,fcr,fcEst,tk:targetKmh,objD:obj==='temps'?objD:null,src:'profil'});
+  $('toCalc').onclick=()=>{$('cVma').value=vma;$('cLv').value=lv+1;$('cAge').value=age||'';$('cFcm').value=+$('pFcm').value||'';$('cFcr').value=fcr||'';$('cTlim').value=gTlim||'';$('cDefi').checked=false;calc();show('calc');};
+  setProf({vma,lv,fcm,fcr,fcEst,tlim:gTlim,tk:targetKmh,objD:obj==='temps'?objD:null,src:'profil'});
   $('cLv').value=lv+1;if(!$('cVma').value||!quiet)$('cVma').value=vma;if(age)$('cAge').value=age;if(+$('pFcm').value)$('cFcm').value=$('pFcm').value;if(fcr)$('cFcr').value=fcr;calc();
   window.lastResume={niveau:LVN[lv],vma:Math.round(vma*10)/10,objectif:obj==='forme'?'Remise en forme':obj==='tenir'?'Tenir '+dn(objD):(goalT?dn(objD)+' en '+fmt(goalT):dn(objD))};
   if(!quiet){$(from==='eval'?'evalOut':'profOut').scrollIntoView({behavior:'smooth'});if(typeof scheduleSave==='function')scheduleSave();}
@@ -882,7 +898,7 @@ function analyse(quiet,from){
 
 /* Séances paramétrées : s = charge (0 → 1), light = semaine allégée */
 /* Échauffement cohérent avec l'intensité de la séance */
-let gAgeW=null;
+let gAgeW=null,gTlim=null;
 function WU(type,lv,vma,age){age=age||gAgeW;const R=Math.round;
   let m=(type==='int'?[15,20,25,30]:[10,15,20,20])[lv];if(type==='vit')m=[15,20,25,30][lv];if(age&&age>=50)m+=5;
   let c;
@@ -898,7 +914,10 @@ function sessions(lv,vma,objD,tk,s,light){
    court:()=>{const c=[[2,6,15,30,95,'marche',3],[2,8,15,15,105,'passive puis trottinée',4],[2,10,30,30,105,'trot léger',4],[3,10,30,30,112,'trot',4]][lv];
      const bd=paBand(c[2],true,lv),n=Math.max(4,R((c[1]+c[6]*s)*f)),p=R(bd[0]+(bd[1]-bd[0])*(.25+.6*s));
      return`<span class="tag">VMA courte</span><br>${c[0]} × (${n} × ${c[2]}''/${c[3]}'') à ${p} % → <b>${d(p,c[2])} m</b> par effort · récup ${c[5]} · 3' entre séries`;},
-   vmalong:()=>{const c=[[4,200,95,"2' marche",3],[5,400,100,"1'30 trot",3],[6,800,98,"2' trot",2],[6,1000,100,"1'30 trot",2]][lv];
+   vmalong:()=>{if(gTlim){const T=gTlim*60,p=lv<=1?95:100,v=ms(vma,p),dist=Math.max(200,R(v*T*(.5+.1*s)/100)*100),w=dist/v,
+       n=Math.max(3,Math.min(10,R([1.2,1.8,2.4,3][lv]*(.85+.3*s)*T*f/w)));
+     return`<span class="tag">VMA longue · calibrée sur ton tlim</span><br>${n} × ${dist} m à ${p} % → <b>${fmt(w)}</b> chacun (≈ ${R(w/T*100)} % de ton tlim de ${fmt(T)}) · récup ${fmt(w)} en trottinant, autant que l'effort`;}
+     const c=[[4,200,95,"2' marche",3],[5,400,100,"1'30 trot",3],[6,800,98,"2' trot",2],[6,1000,100,"1'30 trot",2]][lv];
      const n=Math.max(3,R((c[0]+c[4]*s)*f)),bd=paBand(c[1]/ms(vma,100),false,lv),p=R(bd[0]+(bd[1]-bd[0])*(.25+.6*s));
      return`<span class="tag">VMA longue</span><br>${n} × ${c[1]} m à ${p} % → <b>${t(p,c[1])}</b> chacun · récup ${rc(p,c[1]/ms(vma,100))}`;},
    tenir:()=>{const c=[[3,2,90,"2' marche",2],[4,3,95,"1'30 trot",2],[5,3,95,"1'15 trot",2],[5,4,96,"1' trot",2]][lv];
@@ -945,29 +964,89 @@ function orientation(choice,age,prac,lv){
   if(age<50)return['tenir',`À ${age} ans, avec plusieurs années de pratique, la VMA progresse moins vite, mais la capacité à la tenir progresse encore beaucoup. <b>On développe la VMA au début, puis on travaille à la tenir.</b>`];
   return['tenir',`À ${age} ans, l'enjeu est de <b>maintenir ta VMA</b> (sans fractionné, elle baisse avec l'âge) et surtout de <b>la tenir plus longtemps</b>. On garde toujours une dose de VMA au début.`];}
 
-function planPhases(n){return{4:['vma','mixte','orient','affut'],5:['vma','vma','mixte','orient','affut'],6:['vma','vma','mixte','orient','orient','affut'],8:['vma','vma','mixte','allege','orient','orient','orient','affut']}[n];}
+/* ---------- Programmation ----------
+   Profil : deb = débutant, reprise, niveau N1–N2 en loisir ; int = loisir confirmé ; exp = régulier > 2 ans ou compétiteur.
+   Foncier : deb ≤ 4 sem → foncier prioritaire ; deb ≥ 5 sem → foncier au départ puis logique Billat.
+             exp ≤ 4 sem → directement Billat ; exp > 4 sem → 1 à 2 semaines de foncier puis Billat.
+   Plans > 14 semaines : cycles d'environ 3 mois, chacun clos par une semaine allégée + test de VMA.
+   Charge 3:1 (une semaine allégée toutes les 4) ; affûtage 1 semaine (2 pour semi/marathon sur plan long). */
+function profGroup(prac,lv,soft){if(soft||prac==='jamais'||prac==='reprise'||lv===0)return'deb';if(prac==='loisir')return lv<=1?'deb':'int';return'exp';}
+function durTxt(n){return{17:'4 mois',26:'6 mois',35:'8 mois',43:'10 mois',52:'12 mois'}[n]||n+' semaines';}
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function planPhases(n,grp,obj,objD){
+  const aff=(obj==='temps'&&objD>=21&&n>=10)?2:1,body=n-aff,ph=[],cyc=[];
+  if(grp==='deb'&&n<=4){for(let i=0;i<n-1;i++){ph.push('foncier');cyc.push(0);}ph.push('affut');cyc.push(0);return{ph,cyc,nC:1};}
+  const nC=body<=14?1:Math.ceil(body/14),base=Math.floor(body/nC),extra=body-base*nC;
+  for(let c=0;c<nC;c++){
+    const L=base+(c<extra?1:0),last=c===nC-1;let F;
+    if(c===0){F=grp==='deb'?(nC>1?clamp(Math.round(.45*L),3,8):clamp(Math.round(.4*n),3,6))
+              :grp==='int'?(n<=4?1:clamp(Math.round(.25*L),2,4))
+              :(n<=4?0:L<=6?1:2);}
+    else F=grp==='deb'?3:grp==='int'?2:1;
+    const test=last?0:1;let R=L-F-test;if(R<0){F=Math.max(0,F+R);R=0;}
+    const vW=R<=2?R:Math.ceil(R*.4),mW=R>=4?1:0,oW=R-vW-mW;
+    const seq=[].concat(Array(F).fill('foncier'),Array(vW).fill('vma'),Array(mW).fill('mixte'),Array(oW).fill('orient'),Array(test).fill('test'));
+    if(L>=7||nC>1){let k=0;for(let i=0;i<seq.length;i++){if(['foncier','vma','mixte','orient'].includes(seq[i])){k++;
+      if(k%4===0&&seq.slice(i+1).some(x=>x!=='test'))seq[i]='allege';}}}
+    seq.forEach(x=>{ph.push(x);cyc.push(c);});}
+  for(let i=0;i<aff;i++){ph.push('affut');cyc.push(nC-1);}
+  return{ph,cyc,nC};}
 
-function buildPlan(n,lv,vma,ses,obj,objD,tk,ori,goalTxt){
-  const ph=planPhases(n),build=ph.map((p,i)=>i).filter(i=>ph[i]!=='allege'&&ph[i]!=='affut');
-  const LAB={vma:'Développement de la VMA',mixte:'Transition',allege:'Semaine allégée — on assimile',
+function planWhy(n,grp,ses,ph,nC,cyc){
+  const F=ph.filter((x,i)=>x==='foncier'&&cyc[i]===0).length,mode=ses<=3?'dom':ses===4?'mix':'conc',L=[];
+  if(grp==='deb'&&n<=4)L.push(`<b>Foncier prioritaire.</b> Avec un mois et un profil débutant ou en reprise, on construit d'abord la base : les adaptations aérobies (mitochondries, capillaires) apparaissent en quelques semaines, alors que les tendons et les mollets s'adaptent beaucoup plus lentement. Le fractionné reste présent, mais doux (côtes, intermittent modéré) : on ressent l'effort sans se mettre en danger.`);
+  else if(grp==='deb')L.push(`<b>${F} semaine${F>1?'s':''} de foncier au démarrage</b>, puis le travail de VMA. En début de pratique, les tissus (tendons, mollets) ne sont pas encore prêts ; après un arrêt, la VO₂max et leur tolérance ont baissé (désentraînement : de l'ordre de 5 à 15 % de VO₂max perdus en 1 à 3 mois). Reconstruire la base d'abord, c'est ce qui permet d'encaisser ensuite le fractionné sans se blesser.`);
+  else if(grp==='int')L.push(`<b>${F} semaine${F>1?'s':''} de foncier</b> pour consolider ta base, puis le travail de qualité.`);
+  else if(F===0)L.push(`<b>Directement dans la qualité.</b> Ta base aérobie est construite par des années de pratique : sur un projet court, chaque semaine compte pour la VMA et l'allure spécifique.`);
+  else L.push(`<b>${F} semaine${F>1?'s':''} de foncier</b> pour réhabituer le corps à la charge, puis directement le travail de qualité : ta base est déjà là.`);
+  L.push(`<b>Logique Billat</b> pour la qualité : VMA en intermittent court (30/30), où la récupération permet de cumuler plus de temps à VO₂max qu'en continu, et fractions longues calibrées sur le temps limite à VMA (tlim) : chaque fraction ≈ 50–60 % du tlim, volume total 2 à 3 × tlim.${gTlim?'':' Renseigne ton tlim dans l\'évaluation pour des fractions sur mesure.'}`);
+  L.push(mode==='dom'?`<b>${ses} séance${ses>1?'s':''} par semaine : blocs à dominante.</b> Avec peu de séances, on concentre le travail intense sur une qualité à la fois pour qu'elle reçoive une vraie dose, et la sortie longue reste là chaque semaine.`
+    :mode==='mix'?`<b>4 séances par semaine :</b> une qualité prioritaire selon le bloc, une qualité secondaire en entretien, une sortie longue et un footing.`
+    :`<b>${ses} séances par semaine : programmation concurrente.</b> Avec ce volume, toutes les qualités (VMA, seuil, allure spécifique) sont travaillées chaque semaine ; c'est leur dosage qui change selon la période.`);
+  if(ph.includes('allege'))L.push(`<b>Cycle 3 + 1</b> : trois semaines de charge, une semaine allégée pour assimiler (surcompensation).`);
+  if(nC>1)L.push(`<b>${nC} cycles d'environ ${Math.round(n/nC)} semaines.</b> Chaque nouveau cycle redémarre par ${grp==='deb'?'3':grp==='int'?'2':'1'} semaine${grp==='exp'?'':'s'} de rappel foncier, puis repart sur la VMA et l'allure spécifique, plus haut que le précédent.`);
+  if(nC>1)L.push(`<b>Test de VMA à la fin de chaque cycle</b> : mets ta nouvelle VMA à jour dans ton évaluation et reconstruis le plan pour que tes allures suivent tes progrès.`);
+  if(ph.filter(x=>x==='affut').length>1)L.push(`<b>Affûtage de 2 semaines</b> : volume réduit d'environ 40 à 60 %, intensité conservée (repère : méta-analyse de Bosquet et al., 2007).`);
+  return`<div class="note" style="margin:8px 0 12px">${L.map(x=>`<p style="margin:0 0 6px">${x}</p>`).join('')}</div>`;}
+
+function buildPlan(n,lv,vma,ses,obj,objD,tk,ori,goalTxt,grp){
+  grp=grp||'int';
+  const P=planPhases(n,grp,obj,objD),ph=P.ph,cyc=P.cyc,nC=P.nC,mode=ses<=3?'dom':ses===4?'mix':'conc';
+  const LAB={foncier:'Foncier — construire la base',vma:'Développement de la VMA',mixte:'Transition',allege:'Semaine allégée — on assimile',
+    test:'Fin de cycle — semaine allégée & test de VMA',
     orient:ori==='vma'?'Renforcer la VMA':'Tenir la VMA plus longtemps',affut:obj==='temps'?'Affûtage & jour J':'Bilan & test'};
+  const PR={
+    foncier:{dom:['cotes','seuil','court'],mix:['cotes','seuil'],conc:['seuil','cotes','court']},
+    vma:{dom:['court','vmalong','cotes'],mix:['court','seuil'],conc:['vmalong','court','seuil']},
+    mixte:ori==='vma'?{dom:['vmalong','court','seuil'],mix:['vmalong','seuil'],conc:['vmalong','seuil','court']}
+                     :{dom:['court','tenir','seuil'],mix:['tenir','seuil'],conc:['tenir','seuil','court']},
+    orient:ori==='vma'?{dom:['vmalong','court',tk?'spec':'cotes'],mix:['vmalong',tk?'spec':'seuil'],conc:['vmalong',tk?'spec':'seuil','court']}
+                      :{dom:tk?['tenir','spec','seuil']:['tenir','seuil','court'],mix:['tenir',tk?'spec':'seuil'],conc:['tenir',tk?'spec':'seuil','court']}};
   let q0=ses<=2?1:ses<=4?2:3;if(lv===0)q0=Math.min(q0,2);
-  return ph.map((p,i)=>{
-    const bi=build.indexOf(i),s=bi>=0?(build.length>1?bi/(build.length-1):.5):(p==='allege'?.2:.3),light=p==='allege'||p==='affut';
-    const S=sessions(lv,vma,objD,tk,s,light);
-    let pr;
-    if(p==='vma')pr=['court','vmalong','cotes'];
-    else if(p==='mixte')pr=ori==='vma'?['vmalong','court','seuil']:['court','tenir','seuil'];
-    else if(p==='orient')pr=ori==='vma'?['vmalong','court',tk?'spec':'cotes']:(tk?['tenir','spec','seuil']:['tenir','seuil','court']);
-    else if(p==='allege')pr=['court'];
-    else pr=[tk?'spec':'court'];
-    let q=p==='allege'||p==='affut'?1:q0;
-    const L=[];for(let k=0;k<q;k++)L.push(S[pr[k]]());
-    let rest=ses-q;
+  // progression de la charge : par cycle sur les semaines de développement, et à part sur le foncier
+  const sOf=i=>{const c=cyc[i],idx=ph.map((x,j)=>j).filter(j=>cyc[j]===c&&['vma','mixte','orient'].includes(ph[j])),
+      fi=ph.map((x,j)=>j).filter(j=>cyc[j]===c&&ph[j]==='foncier');
+    if(ph[i]==='foncier')return fi.length>1?.05+.25*fi.indexOf(i)/(fi.length-1):.15;
+    const b=idx.indexOf(i);if(b<0)return ph[i]==='allege'||ph[i]==='test'?.2:.3;
+    const base=nC>1?.15*c/(nC-1):0;return base+(1-base)*(idx.length>1?b/(idx.length-1):.5);};
+  const testTxt=`Test de VMA 6 minutes en fin de semaine, après un bon échauffement : cours le plus loin possible. Nouvelle VMA = distance ÷ 100. <b>Mets-la à jour dans ton évaluation et reconstruis ton plan</b> pour la suite.`;
+  // frise des blocs
+  const blocks=[];ph.forEach((p,i)=>{const l=blocks[blocks.length-1];if(l&&l.p===p&&l.c===cyc[i])l.e=i;else blocks.push({p,c:cyc[i],s:i,e:i});});
+  const frise=`<div class="card" style="background:var(--bg2);margin:0 0 10px"><b>Les étapes du plan</b><ul style="margin:6px 0 0;padding-left:18px">${blocks.map(B=>`<li>S${B.s+1}${B.e>B.s?'–'+(B.e+1):''}${nC>1?' · cycle '+(B.c+1):''} : ${LAB[B.p]}</li>`).join('')}</ul></div>`;
+  const weeks=ph.map((p,i)=>{
+    const s=sOf(i),light=p==='allege'||p==='affut'||p==='test',S=sessions(lv,vma,objD,tk,s,light);
+    let pr,q;
+    if(p==='allege'||p==='test'){pr=['court'];q=1;}
+    else if(p==='affut'){pr=[tk?'spec':'court'];q=1;}
+    else{pr=PR[p][mode];q=q0;if(p==='foncier'){q=Math.min(q0,lv===0?1:2);if(grp==='deb'&&lv===0)pr=['cotes'];}}
+    const L=[];for(let k=0;k<q&&k<pr.length;k++)L.push(S[pr[k]]());
+    let rest=ses-L.length;
+    if(p==='test'){L.push(`<span class="tag">Test de VMA</span><br>${testTxt}`);rest--;}
     if(p==='affut'){L.push(`<span class="tag">${obj==='temps'?'Objectif':'Test'}</span><br>${goalTxt}`);rest--;}
     if(rest>=1&&p!=='affut'){L.push(S.longue());rest--;}
     if(rest>0)L.push(S.footing(rest));
-    return`<details class="wk"${i===0?' open':''}><summary><span class="wn">Semaine ${i+1}</span> · ${LAB[p]}</summary><ol class="week">${L.map(x=>`<li>${x}</li>`).join('')}</ol></details>`;}).join('');}
+    return`<details class="wk"${i===0?' open':''}><summary><span class="wn">Semaine ${i+1}</span>${nC>1?' · cycle '+(cyc[i]+1):''} · ${LAB[p]}</summary><ol class="week">${L.map(x=>`<li>${x}</li>`).join('')}</ol></details>`;}).join('');
+  return{html:frise+weeks,why:planWhy(n,grp,ses,ph,nC,cyc)};}
 
 /* ---------- Filières ---------- */
 let gProf=null;function setVma(v){if(gProf)gProf.vma=v;else gProf={vma:v,src:'test'};}
@@ -1035,8 +1114,8 @@ const SB_URL='https://zjzamoprkqicywezzidr.supabase.co',SB_KEY='sb_publishable_a
 const SB=window.supabase?window.supabase.createClient(SB_URL,SB_KEY):null;
 let ME=null,gTab='run',gMode='in',saveT=null,loading=false;
 const mail=u=>`${u.trim().toLowerCase()}@${DOM}`;
-const PF=['pAge','pSex','pPrac','pSoft','pSes','pSesP','pVma','pFcm','pFcr','p10','pSemi','pMara','pObjD','pObjDo','pObjT','pPlan'],CF=['cVma','cLv','cAge','cFcm','cFcr','cDefi'];
-const LAB={pAge:'Âge',pSex:'Sexe',pPrac:'Pratique',pSoft:'Démarrage en douceur',pSes:'Séances / semaine (habitude)',pSesP:'Séances / semaine (projet)',pVma:'VMA',pFcm:'FC max',pFcr:'FC repos',p10:'Chrono 10 km',pSemi:'Chrono semi',pMara:'Chrono marathon',pObjD:'Distance objectif',pObjDo:'Distance perso',pObjT:'Temps visé',pPlan:'Plan (semaines)',obj:'Objectif',ori:'Priorité'};
+const PF=['pAge','pSex','pPrac','pSoft','pSes','pSesP','pVma','pFcm','pFcr','pTlim','p10','pSemi','pMara','pObjD','pObjDo','pObjT','pPlan'],CF=['cVma','cLv','cAge','cFcm','cFcr','cTlim','cDefi'];
+const LAB={pAge:'Âge',pSex:'Sexe',pPrac:'Pratique',pSoft:'Démarrage en douceur',pSes:'Séances / semaine (habitude)',pSesP:'Séances / semaine (projet)',pVma:'VMA',pFcm:'FC max',pFcr:'FC repos',pTlim:'Tlim',p10:'Chrono 10 km',pSemi:'Chrono semi',pMara:'Chrono marathon',pObjD:'Distance objectif',pObjDo:'Distance perso',pObjT:'Temps visé',pPlan:'Plan (semaines)',obj:'Objectif',ori:'Priorité'};
 function grab(ids){const o={};ids.forEach(i=>{const e=$(i);if(e)o[i]=e.type==='checkbox'?e.checked:e.value;});return o;}
 function put(o,ids){ids.forEach(i=>{const e=$(i);if(e&&o&&i in o){if(e.type==='checkbox')e.checked=!!o[i];else e.value=o[i];}});}
 async function fnCall(body){const{data,error}=await SB.functions.invoke('rd-auth',{body});
@@ -1138,7 +1217,7 @@ $('installBtn').onclick=doInstall;$('installNav').onclick=doInstall;
 
 
 /* ----- Champs communs : Calcul direct <-> Mieux vous connaître (synchronisés dans les deux sens) ----- */
-const SYNC=[['cVma','pVma'],['cAge','pAge'],['cFcm','pFcm'],['cFcr','pFcr']];
+const SYNC=[['cVma','pVma'],['cAge','pAge'],['cFcm','pFcm'],['cFcr','pFcr'],['cTlim','pTlim']];
 SYNC.forEach(([a,b])=>{
   $(a).addEventListener('input',()=>{$(b).value=$(a).value;});
   $(b).addEventListener('input',()=>{$(a).value=$(b).value;calc();});});
