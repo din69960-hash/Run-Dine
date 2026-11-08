@@ -804,7 +804,7 @@ document.querySelectorAll('input[name=obj]').forEach(r=>r.onchange=()=>{const o=
 $('pObjD').onchange=()=>$('objOther').classList.toggle('hide',$('pObjD').value!=='autre');
 $('goTests').onclick=()=>show('test');
 const objVal=()=>document.querySelector('input[name=obj]:checked').value;
-const PRAC={jamais:0,reprise:0,loisir:1,reg2:1,compreg:2,compnat:2,inter:3};
+const PRAC={jamais:0,reprise:0,loisir:1,reg2:2,compreg:2,compnat:2,inter:3};
 
 $('analyse').onclick=()=>analyse(false,'prof');$('analyseE').onclick=()=>analyse(false,'eval');
 function analyse(quiet,from){
